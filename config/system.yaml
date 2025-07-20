@@ -1,0 +1,35 @@
+# OCPP 2.0.1 ゲートウェイ・ミドルウェア システム設定
+# システム全体の設定を定義します
+
+system:
+  # ログ設定
+  log_level: INFO  # ログレベル: TRACE, DEBUG, INFO, WARN, ERROR, CRITICAL
+  log_rotation:
+    max_size_mb: 10    # ログファイルの最大サイズ（MB）
+    max_files: 5       # 保持するログファイル数
+    compress: true     # 古いログファイルを圧縮するかどうか
+  
+  # メトリクス設定
+  metrics:
+    prometheus_port: 9090  # Prometheusメトリクスエンドポイントのポート
+    enabled: true          # メトリクス収集を有効にするかどうか
+  
+  # セキュリティ設定
+  security:
+    tls_cert_path: "/etc/ocpp-gw/certs/server.crt"      # サーバー証明書のパス
+    tls_key_path: "/etc/ocpp-gw/certs/server.key"       # サーバー秘密鍵のパス
+    ca_cert_path: "/etc/ocpp-gw/certs/ca.crt"           # CA証明書のパス
+    client_cert_required: false                          # クライアント証明書を要求するかどうか
+  
+  # パフォーマンス設定
+  performance:
+    max_charge_points: 100    # 最大充電ポイント数
+    max_concurrent_requests: 50  # 最大同時リクエスト数
+    request_timeout_ms: 5000     # リクエストタイムアウト（ミリ秒）
+  
+  # 管理API設定
+  admin_api:
+    enabled: true              # 管理APIを有効にするかどうか
+    port: 8080                # 管理APIのポート
+    bind_address: "127.0.0.1" # バインドアドレス
+    authentication: true       # 認証を有効にするかどうか

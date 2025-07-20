@@ -1,0 +1,100 @@
+# Modbus TCP 充電器テンプレート
+# 汎用Modbus TCP対応充電器のマッピング設定
+
+template:
+  id: "modbus_tcp_generic"
+  name: "汎用Modbus TCP充電器"
+  description: "汎用Modbus TCP対応充電器のテンプレート"
+  version: "1.0"
+  
+  # デバイス情報
+  device:
+    protocol: "modbus_tcp"
+    function_code: 0x03  # Read Holding Registers
+    byte_order: "big_endian"  # バイトオーダー
+  
+  # OCPP変数とModbusレジスタのマッピング
+  variables:
+    # 利用可能状態
+    - ocpp_name: "AvailabilityState"
+      description: "充電器の利用可能状態"
+      type: "modbus"
+      register: 40001    # 保持レジスタ番号
+      data_type: "uint16"
+      enum:
+        0: "Available"    # 利用可能
+        1: "Occupied"     # 使用中
+        2: "Reserved"     # 予約済み
+        3: "Unavailable"  # 利用不可
+        4: "Faulted"      # 故障
+    
+    # 電力量計測値
+    - ocpp_name: "MeterValue.Energy.Active.Import.Register"
+      description: "累積電力量（kWh）"
+      type: "modbus"
+      register: 40010    # 保持レジスタ番号
+      data_type: "float32"
+      scale: 0.1         # スケール
+      unit: "kWh"
+    
+    # コネクタ状態
+    - ocpp_name: "Connector.Status"
+      description: "コネクタの状態"
+      type: "modbus"
+      register: 40002    # 保持レジスタ番号
+      data_type: "uint16"
+      enum:
+        0: "Available"    # 利用可能
+        1: "Occupied"     # 使用中
+        2: "Reserved"     # 予約済み
+        3: "Faulted"      # 故障
+    
+    # 充電電力
+    - ocpp_name: "MeterValue.Power.Active.Import"
+      description: "充電電力（kW）"
+      type: "modbus"
+      register: 40012    # 保持レジスタ番号
+      data_type: "float32"
+      scale: 0.01        # スケール
+      unit: "kW"
+    
+    # 充電電流
+    - ocpp_name: "MeterValue.Current.Import"
+      description: "充電電流（A）"
+      type: "modbus"
+      register: 40014    # 保持レジスタ番号
+      data_type: "float32"
+      scale: 0.1         # スケール
+      unit: "A"
+    
+    # 充電電圧
+    - ocpp_name: "MeterValue.Voltage"
+      description: "充電電圧（V）"
+      type: "modbus"
+      register: 40016    # 保持レジスタ番号
+      data_type: "float32"
+      scale: 1.0         # スケール
+      unit: "V"
+  
+  # コマンドマッピング
+  commands:
+    # 充電開始
+    - ocpp_name: "StartTransaction"
+      description: "充電開始コマンド"
+      type: "modbus"
+      register: 40020    # 保持レジスタ番号
+      data_type: "uint16"
+      function_code: 0x06  # Write Single Register
+      enum:
+        1: "Start"       # 開始
+        0: "Stop"        # 停止
+    
+    # 充電停止
+    - ocpp_name: "StopTransaction"
+      description: "充電停止コマンド"
+      type: "modbus"
+      register: 40020    # 保持レジスタ番号
+      data_type: "uint16"
+      function_code: 0x06  # Write Single Register
+      enum:
+        0: "Stop"        # 停止

@@ -1,0 +1,63 @@
+# サンプルデバイス設定
+# 実際の充電器の設定例
+
+devices:
+  # Modbus TCP対応充電器の例
+  - id: "CP001"
+    name: "充電器1号機"
+    description: "Modbus TCP対応充電器のサンプル"
+    template: "modbus_tcp_generic"
+    protocol: "modbus_tcp"
+    ocpp_id: "CP001"  # OCPP充電ポイントID
+    
+    # 接続設定
+    connection:
+      ip: "192.168.1.100"  # デバイスのIPアドレス
+      port: 502             # Modbus TCPポート
+      unit_id: 1            # スレーブID
+      timeout_ms: 5000      # 通信タイムアウト（ミリ秒）
+      retry_count: 3        # リトライ回数
+    
+    # 監視設定
+    monitoring:
+      enabled: true         # 監視を有効にするかどうか
+      interval_sec: 30      # 監視間隔（秒）
+      heartbeat_interval_sec: 300  # ハートビート間隔（秒）
+    
+    # カスタム設定（テンプレートで定義されていない場合）
+    custom_settings:
+      max_current_a: 32     # 最大電流（A）
+      max_voltage_v: 400    # 最大電圧（V）
+  
+  # ECHONET Lite対応充電器の例
+  - id: "CP002"
+    name: "充電器2号機"
+    description: "ECHONET Lite対応充電器のサンプル"
+    template: "echonet_lite_generic"
+    protocol: "echonet_lite"
+    ocpp_id: "CP002"  # OCPP充電ポイントID
+    
+    # 接続設定
+    connection:
+      ip: "192.168.1.101"  # デバイスのIPアドレス
+      port: 3610            # ECHONET Liteポート
+      timeout_ms: 5000      # 通信タイムアウト（ミリ秒）
+      retry_count: 3        # リトライ回数
+    
+    # ECHONET Lite固有設定
+    echonet_lite:
+      class_group: 0x02     # 住宅・設備関連機器クラスグループ
+      class: 0x87           # 蓄電池クラス
+      instance: 0x01        # インスタンス番号
+      multicast_enabled: true  # マルチキャスト探索を有効にするかどうか
+    
+    # 監視設定
+    monitoring:
+      enabled: true         # 監視を有効にするかどうか
+      interval_sec: 30      # 監視間隔（秒）
+      heartbeat_interval_sec: 300  # ハートビート間隔（秒）
+    
+    # カスタム設定
+    custom_settings:
+      max_current_a: 32     # 最大電流（A）
+      max_voltage_v: 400    # 最大電圧（V）

@@ -1,0 +1,29 @@
+# OCPP 2.0.1 ゲートウェイ・ミドルウェア CSMS設定
+# Central System Management System（OCPPサーバー）との接続設定
+
+csms:
+  # CSMS接続設定
+  url: "wss://csms.example.com/ocpp"  # CSMSのWebSocket URL
+  reconnect_interval_sec: 30           # 再接続間隔（秒）
+  max_reconnect_attempts: 10           # 最大再接続試行回数
+  
+  # ハートビート設定
+  heartbeat_interval_sec: 300          # ハートビート送信間隔（秒）
+  
+  # TLS設定
+  tls:
+    enabled: true                       # TLSを有効にするかどうか
+    verify_server_cert: true            # サーバー証明書を検証するかどうか
+    verify_hostname: true               # ホスト名を検証するかどうか
+  
+  # 認証設定
+  authentication:
+    enabled: false                      # 認証を有効にするかどうか
+    username: ""                        # ユーザー名（認証が有効な場合）
+    password: ""                        # パスワード（認証が有効な場合）
+  
+  # メッセージ設定
+  message:
+    max_message_size: 65536             # 最大メッセージサイズ（バイト）
+    request_timeout_sec: 30             # リクエストタイムアウト（秒）
+    retry_count: 3                      # リトライ回数
