@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 質問・サポート
+    url: https://github.com/your-org/ocpp-gw/discussions
+    about: 一般的な質問や使用方法についてはDiscussionsをご利用ください
+  - name: セキュリティの報告
+    url: https://github.com/your-org/ocpp-gw/security/advisories/new
+    about: セキュリティ脆弱性はPrivate Security Advisoryで報告してください 

@@ -8,6 +8,9 @@ set(COMMON_SOURCES
     common/system_config.cpp
     common/metrics_collector.cpp
     common/prometheus_exporter.cpp
+    common/tls_manager.cpp
+    common/rbac_manager.cpp
+    common/i18n_manager.cpp
 )
 
 # APIライブラリ

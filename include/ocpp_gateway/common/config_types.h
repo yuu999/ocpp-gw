@@ -59,9 +59,28 @@ struct SecurityConfig {
     std::string tls_key_path;
     std::string ca_cert_path;
     bool client_cert_required = false;
+    std::string tls_version = "1.2";  // TLS version: "1.2" or "1.3"
+    bool verify_server_cert = true;    // Verify server certificate
+    bool verify_client_cert = false;   // Verify client certificate (mutual auth)
+    std::string cipher_suites;         // Custom cipher suites (optional)
 
     bool validate() const {
         // TLS paths can be empty if TLS is not used
+        if (!tls_cert_path.empty() && !tls_key_path.empty()) {
+            // If TLS is enabled, validate paths
+            if (tls_cert_path.empty()) {
+                throw ConfigValidationError("TLS certificate path is required when TLS is enabled");
+            }
+            if (tls_key_path.empty()) {
+                throw ConfigValidationError("TLS key path is required when TLS is enabled");
+            }
+        }
+        
+        // Validate TLS version
+        if (tls_version != "1.2" && tls_version != "1.3") {
+            throw ConfigValidationError("TLS version must be '1.2' or '1.3'");
+        }
+        
         return true;
     }
 };

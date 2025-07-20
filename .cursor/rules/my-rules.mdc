@@ -1,0 +1,37 @@
+---
+alwaysApply: true
+---
+# Cursor Rules for OCPP Gateway
+
+## プロジェクト概要
+
+OCPP 2.0.1 対応ゲートウェイ・ミドルウェアの開発を行います。  
+要件事項等は、/requirement/requirement.md を参照してください。  
+
+作業する際は、requirement.md, design.md, task_list.md を参照してください。
+
+## タスク管理
+
+- ./.kiro/specs/ocpp-gateway-middleware配下のファイルを参照して、タスクを管理する。
+- ./.kiro/specs/ocpp-gateway-middleware/tasks.mdを参照し、進捗の管理をすること。終了したタスクはチェックを入れること。
+
+## コーディング規約
+
+### 全般
+
+- コードの可読性を最優先とする
+- セキュリティを常に意識した実装を行う
+- C++17での開発を行う
+- コード内のコメントは英語で記述する。
+
+### ドキュメント
+
+- README.mdは常に最新に保つ
+- 設計ドキュメントの維持
+- トラブルシューティングガイドの充実
+
+## そのほか
+
+- 実施した作業については、work_log/ ディレクトリに記録する
+- 実施した時刻をファイルのprefixとする。
+- https://github.com/solidstudiosh/ocpp-virtual-charge-point を参考にする。
