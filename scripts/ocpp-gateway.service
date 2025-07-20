@@ -1,0 +1,23 @@
+[Unit]
+Description=OCPP 2.0.1 Gateway Middleware
+After=network.target
+
+[Service]
+Type=simple
+User=ocpp-gw
+Group=ocpp-gw
+ExecStart=/usr/bin/ocpp-gateway --config /etc/ocpp-gw/system.yaml
+Restart=on-failure
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ocpp-gateway
+
+# Security settings
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
