@@ -317,9 +317,7 @@ void ConfigManager::startFileMonitoring() {
     
     // Start file monitoring in a separate thread
     std::thread([this]() {
-        std::atomic<bool>& active = file_monitoring_active_;
-        
-        while (active) {
+        while (file_monitoring_active_) {
             // Sleep for a short time
             std::this_thread::sleep_for(std::chrono::seconds(5));
             
@@ -340,6 +338,7 @@ void ConfigManager::stopFileMonitoring() {
 void ConfigManager::handleFileChange(const std::string& file_path) {
     // This method would be called by a file system monitoring API
     // For now, we just reload all configurations
+    (void)file_path; // Suppress unused parameter warning
     reloadAllConfigs();
 }
 
