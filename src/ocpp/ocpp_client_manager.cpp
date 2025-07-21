@@ -447,3 +447,6 @@ void OcppClientManager::onEvseTransactionEvent(const std::string& eventType, con
     // Send message to CSMS
     sendMessage(message);
 }
+
+} // namespace ocpp
+} // namespace ocpp_gateway

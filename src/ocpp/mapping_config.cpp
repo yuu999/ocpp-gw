@@ -1233,8 +1233,9 @@ std::optional<MappingTemplate> MappingTemplateCollection::getTemplate(const std:
 }
 
 } // namespace ocpp
-} // namespace ocpp_gateway//
- MappingTemplateCollection implementation for hot reload functionality
+} // namespace ocpp_gateway
+
+// MappingTemplateCollection implementation for hot reload functionality
 MappingTemplateCollection::~MappingTemplateCollection() {
     disableHotReload();
 }

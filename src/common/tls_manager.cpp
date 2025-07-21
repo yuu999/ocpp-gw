@@ -106,7 +106,6 @@ CertificateInfo TlsManager::getCertificateInfo(const std::string& cert_path) con
             continue;
         }
         if (line.find("-----END CERTIFICATE-----") != std::string::npos) {
-            in_cert = false;
             break;
         }
         if (in_cert) {

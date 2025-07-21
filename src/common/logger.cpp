@@ -217,6 +217,14 @@ void Logger::flush() {
     }
 }
 
+// Helper function to check if string ends with suffix (C++17 compatible)
+static bool endsWith(const std::string& str, const std::string& suffix) {
+    if (str.length() < suffix.length()) {
+        return false;
+    }
+    return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
+}
+
 int Logger::compressOldLogs(const std::string& log_dir, const std::string& pattern) {
     try {
         int compressed_count = 0;
@@ -235,7 +243,7 @@ int Logger::compressOldLogs(const std::string& log_dir, const std::string& patte
             std::string filename = entry.path().filename().string();
             
             // Skip already compressed files
-            if (filename.ends_with(".gz")) {
+            if (endsWith(filename, ".gz")) {
                 continue;
             }
             
@@ -249,7 +257,7 @@ int Logger::compressOldLogs(const std::string& log_dir, const std::string& patte
                 size_t dot_pos = pattern_regex.find('.');
                 if (dot_pos != std::string::npos) {
                     std::string ext = pattern_regex.substr(dot_pos);
-                    if (!filename.ends_with(ext.substr(1))) {
+                    if (!endsWith(filename, ext.substr(1))) {
                         continue;
                     }
                 }

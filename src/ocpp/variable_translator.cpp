@@ -505,6 +505,7 @@ std::string VariableTranslator::mapEnumToString(const std::map<int, std::string>
 }
 
 int VariableTranslator::mapEnumToInt(const std::map<int, std::string>& enum_map, const std::string& value) const {
+    // NOLINTNEXTLINE(cppcheck-useStlAlgorithm)
     for (const auto& pair : enum_map) {
         if (pair.second == value) {
             return pair.first;

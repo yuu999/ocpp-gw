@@ -258,6 +258,7 @@ bool ConfigManager::saveAllConfigs() {
         }
         
         // Save device configurations
+        // NOLINTNEXTLINE(cppcheck-useStlAlgorithm)
         for (const auto& device : device_configs_.getDevices()) {
             std::string device_file = devices_dir + "/" + device.getId() + ".yaml";
             

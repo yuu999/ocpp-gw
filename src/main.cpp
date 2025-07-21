@@ -232,7 +232,6 @@ int main(int argc, char* argv[]) {
         // 設定ファイルパスと詳細ログフラグの取得
         std::string config_path = vm["config"].as<std::string>();
         bool verbose = vm.count("verbose") > 0;
-        bool daemon_mode = vm.count("daemon") > 0;
         bool cli_mode = vm.count("cli") > 0;
 
         // CLIモードの処理

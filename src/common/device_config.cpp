@@ -1391,6 +1391,7 @@ bool DeviceConfigCollection::removeDevice(const std::string& id) {
 }
 
 std::optional<DeviceConfig> DeviceConfigCollection::getDevice(const std::string& id) const {
+    // NOLINTNEXTLINE(cppcheck-useStlAlgorithm)
     for (const auto& device : devices_) {
         if (device.getId() == id) {
             return device;

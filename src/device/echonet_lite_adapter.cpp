@@ -554,6 +554,7 @@ std::map<RegisterAddress, ReadResult> EchonetLiteAdapter::readMultipleRegisters(
         std::set<uint8_t> processed_epcs;
         for (const auto& prop : response.frame.properties) {
             // Find the corresponding address
+            // NOLINTNEXTLINE(cppcheck-useStlAlgorithm)
             for (const auto& address : group_addresses) {
                 if (address.epc == prop.epc) {
                     // Check if this is an error response for this property
@@ -666,7 +667,7 @@ bool EchonetLiteAdapter::initializeSocket() {
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(ECHONET_PORT);
     
-    if (bind(socket_fd_, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+    if (bind(socket_fd_, static_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
         LOG_ERROR("Failed to bind socket: {}", strerror(errno));
         close(socket_fd_);
         socket_fd_ = -1;
@@ -769,7 +770,7 @@ void EchonetLiteAdapter::receiverThreadFunc() {
         
         // Receive data
         ssize_t received = recvfrom(socket_fd_, buffer.data(), buffer.size(), 0,
-                                   (struct sockaddr*)&sender_addr, &sender_addr_len);
+                                   static_cast<struct sockaddr*>(&sender_addr), &sender_addr_len);
         
         if (received < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -867,7 +868,7 @@ bool EchonetLiteAdapter::sendFrame(const std::string& device_id, const EchonetLi
     
     // Send data
     ssize_t sent = sendto(socket_fd_, data.data(), data.size(), 0,
-                         (struct sockaddr*)&dest_addr, sizeof(dest_addr));
+                         static_cast<struct sockaddr*>(&dest_addr), sizeof(dest_addr));
     
     if (sent < 0) {
         LOG_ERROR("Failed to send frame to {}: {}", echonet_address->ip_address, strerror(errno));
@@ -903,7 +904,7 @@ bool EchonetLiteAdapter::sendMulticastFrame(const EchonetLiteFrame& frame) {
     
     // Send data
     ssize_t sent = sendto(multicast_socket_fd_, data.data(), data.size(), 0,
-                         (struct sockaddr*)&dest_addr, sizeof(dest_addr));
+                         static_cast<struct sockaddr*>(&dest_addr), sizeof(dest_addr));
     
     if (sent < 0) {
         LOG_ERROR("Failed to send multicast frame: {}", strerror(errno));
