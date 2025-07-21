@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(ocpp-gateway VERSION 1.0.0 LANGUAGES CXX)
 
+# CMakeポリシーの設定
+cmake_policy(SET CMP0167 NEW)
+
 # C++17を使用
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -44,11 +47,17 @@ find_package(spdlog REQUIRED)
 
 # プロジェクトのインクルードディレクトリ
 include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/third_party)
+if(EXISTS "${CMAKE_SOURCE_DIR}/third_party")
+    include_directories(${CMAKE_SOURCE_DIR}/third_party)
+endif()
 
 # サブディレクトリ
 add_subdirectory(src)
-add_subdirectory(third_party)
+
+# third_partyディレクトリが存在する場合のみ追加
+if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/CMakeLists.txt")
+    add_subdirectory(third_party)
+endif()
 
 # テストの有効化（オプション）
 option(BUILD_TESTS "Build unit tests" ON)
