@@ -53,10 +53,10 @@ target_link_libraries(unit_tests
     gtest
     gtest_main
     ocpp-gateway-common
-    ocpp-gateway-mapping
-    ocpp-gateway-device
-    ocpp-gateway-ocpp
     ocpp-gateway-api
+    ocpp-gateway-device
+    ocpp-gateway-mapping
+    ocpp-gateway-ocpp
     ${Boost_LIBRARIES}
     yaml-cpp
     ${JSONCPP_LIBRARIES}

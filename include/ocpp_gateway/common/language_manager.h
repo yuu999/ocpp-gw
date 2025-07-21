@@ -114,4 +114,4 @@ private:
 };
 
 } // namespace common
-} // namespace ocpp_gateway
+} // namespace ocpp_gateway 

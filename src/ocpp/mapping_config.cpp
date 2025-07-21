@@ -1,19 +1,18 @@
 #include "ocpp_gateway/ocpp/mapping_config.h"
+#include "ocpp_gateway/common/file_watcher.h"
+#include "ocpp_gateway/common/logger.h"
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <yaml-cpp/yaml.h>
 #include <nlohmann/json.hpp>
 #include <set>
+#include <mutex>
 
 namespace ocpp_gateway {
 namespace ocpp {
 
 namespace fs = std::filesystem;
-
-#include "ocpp_gateway/common/file_watcher.h"
-#include "ocpp_gateway/common/logger.h"
-#include <mutex>
 using json = nlohmann::json;
 
 // ModbusVariableMapping implementation

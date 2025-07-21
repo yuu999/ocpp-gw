@@ -45,6 +45,11 @@ set(OCPP_SOURCES
     ocpp/variable_translator.cpp
 )
 
+# Mappingライブラリ
+set(MAPPING_SOURCES
+    mapping/mapping_engine.cpp
+)
+
 # 共通ライブラリ
 add_library(ocpp-gateway-common STATIC ${COMMON_SOURCES})
 target_link_libraries(ocpp-gateway-common
@@ -73,6 +78,14 @@ target_link_libraries(ocpp-gateway-device
     Threads::Threads
 )
 
+# Mappingライブラリ
+add_library(ocpp-gateway-mapping STATIC ${MAPPING_SOURCES})
+target_link_libraries(ocpp-gateway-mapping
+    ocpp-gateway-common
+    ${Boost_LIBRARIES}
+    Threads::Threads
+)
+
 # OCPP通信ライブラリ
 add_library(ocpp-gateway-ocpp STATIC ${OCPP_SOURCES})
 target_link_libraries(ocpp-gateway-ocpp
@@ -90,6 +103,7 @@ target_link_libraries(ocpp-gateway
     ocpp-gateway-common
     ocpp-gateway-api
     ocpp-gateway-device
+    ocpp-gateway-mapping
     ocpp-gateway-ocpp
     ${Boost_LIBRARIES}
     Threads::Threads
@@ -111,7 +125,7 @@ target_include_directories(ocpp-gateway-common PUBLIC
 )
 
 # 各ライブラリに同じインクルードディレクトリを設定
-foreach(lib ocpp-gateway-api ocpp-gateway-device ocpp-gateway-ocpp ocpp-gateway)
+foreach(lib ocpp-gateway-api ocpp-gateway-device ocpp-gateway-mapping ocpp-gateway-ocpp ocpp-gateway)
     target_include_directories(${lib} PUBLIC
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/third_party
