@@ -1,0 +1,98 @@
+# ECHONET Lite EV充電器テンプレート
+# EV充電器専用のマッピング設定
+
+template:
+  id: "echonet_lite_charger"
+  name: "ECHONET Lite EV充電器"
+  description: "ECHONET Lite対応EV充電器のテンプレート"
+  version: "1.0"
+  
+  # デバイス情報
+  device:
+    protocol: "echonet_lite"
+    class_group: 0x02  # 住宅・設備関連機器クラスグループ
+    class: 0x7D        # EV充電器クラス
+    instance: 0x01     # インスタンス番号
+  
+  # OCPP変数とECHONET Lite EPCのマッピング
+  variables:
+    # 利用可能状態
+    - ocpp_name: "AvailabilityState"
+      description: "充電器の利用可能状態"
+      type: "echonet_lite"
+      epc: 0xB0        # 動作状態
+      data_type: "uint8"
+      enum:
+        0x30: "Available"    # 利用可能
+        0x31: "Occupied"     # 使用中
+        0x32: "Unavailable"  # 利用不可
+        0x33: "Faulted"      # 故障
+    
+    # 電力量計測値
+    - ocpp_name: "MeterValue.Energy.Active.Import.Register"
+      description: "累積電力量（kWh）"
+      type: "echonet_lite"
+      epc: 0xE0        # 積算電力量計測値
+      data_type: "uint32"
+      scale: 0.001      # スケール（Wh → kWh）
+      unit: "kWh"
+    
+    # コネクタ状態
+    - ocpp_name: "Connector.Status"
+      description: "コネクタの状態"
+      type: "echonet_lite"
+      epc: 0xC0        # 接続状態
+      data_type: "uint8"
+      enum:
+        0x30: "Available"    # 利用可能
+        0x31: "Occupied"     # 使用中
+        0x32: "Reserved"     # 予約済み
+        0x33: "Faulted"      # 故障
+    
+    # 充電電力
+    - ocpp_name: "MeterValue.Power.Active.Import"
+      description: "充電電力（kW）"
+      type: "echonet_lite"
+      epc: 0xE1        # 瞬時電力計測値
+      data_type: "uint16"
+      scale: 0.1        # スケール（W → kW）
+      unit: "kW"
+    
+    # 充電電圧
+    - ocpp_name: "MeterValue.Voltage"
+      description: "充電電圧（V）"
+      type: "echonet_lite"
+      epc: 0xE2        # 瞬時電圧計測値
+      data_type: "uint16"
+      scale: 1.0        # スケール
+      unit: "V"
+    
+    # 充電電流
+    - ocpp_name: "MeterValue.Current.Import"
+      description: "充電電流（A）"
+      type: "echonet_lite"
+      epc: 0xE3        # 瞬時電流計測値
+      data_type: "uint16"
+      scale: 0.1        # スケール（A）
+      unit: "A"
+  
+  # コマンドマッピング
+  commands:
+    # 充電開始
+    - ocpp_name: "StartTransaction"
+      description: "充電開始コマンド"
+      type: "echonet_lite"
+      epc: 0x80        # 運転設定
+      data_type: "uint8"
+      enum:
+        0x30: "Start"   # 開始
+        0x31: "Stop"    # 停止
+    
+    # 充電停止
+    - ocpp_name: "StopTransaction"
+      description: "充電停止コマンド"
+      type: "echonet_lite"
+      epc: 0x80        # 運転設定
+      data_type: "uint8"
+      enum:
+        0x31: "Stop"    # 停止 

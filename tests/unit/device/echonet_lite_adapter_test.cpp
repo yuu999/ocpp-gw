@@ -19,7 +19,7 @@ TEST_F(EchonetLiteFrameTest, SerializeDeserialize) {
     frame.seoj_class_code = 0xFF;
     frame.seoj_instance_code = 0x01;
     frame.deoj_class_group_code = 0x02;
-    frame.deoj_class_code = 0x7D;
+    frame.deoj_class_code = EOJ_EV_CHARGER_CLASS;
     frame.deoj_instance_code = 0x01;
     frame.esv = 0x62; // GET request
     
@@ -56,7 +56,7 @@ TEST_F(EchonetLiteFrameTest, SerializeDeserialize) {
     EXPECT_EQ(deserialized.seoj_class_code, 0xFF);
     EXPECT_EQ(deserialized.seoj_instance_code, 0x01);
     EXPECT_EQ(deserialized.deoj_class_group_code, 0x02);
-    EXPECT_EQ(deserialized.deoj_class_code, 0x7D);
+    EXPECT_EQ(deserialized.deoj_class_code, EOJ_EV_CHARGER_CLASS);
     EXPECT_EQ(deserialized.deoj_instance_code, 0x01);
     EXPECT_EQ(deserialized.esv, 0x62);
     EXPECT_EQ(deserialized.opc, 1);
@@ -69,11 +69,11 @@ TEST_F(EchonetLiteFrameTest, SerializeDeserialize) {
 TEST_F(EchonetLiteFrameTest, CreateGetPropertyFrame) {
     // Create a GET property frame
     std::vector<uint8_t> properties = {0x80, 0x88, 0x8A};
-    EchonetLiteFrame frame = EchonetLiteFrame::createGetPropertyFrame(0x02, 0x7D, 0x01, properties);
+    EchonetLiteFrame frame = EchonetLiteFrame::createGetPropertyFrame(0x02, EOJ_EV_CHARGER_CLASS, 0x01, properties);
     
     // Verify frame
     EXPECT_EQ(frame.deoj_class_group_code, 0x02);
-    EXPECT_EQ(frame.deoj_class_code, 0x7D);
+    EXPECT_EQ(frame.deoj_class_code, EOJ_EV_CHARGER_CLASS);
     EXPECT_EQ(frame.deoj_instance_code, 0x01);
     EXPECT_EQ(frame.esv, 0x62); // GET request
     ASSERT_EQ(frame.properties.size(), 3);
@@ -88,11 +88,11 @@ TEST_F(EchonetLiteFrameTest, CreateGetPropertyFrame) {
 TEST_F(EchonetLiteFrameTest, CreateSetPropertyFrame) {
     // Create a SET property frame
     std::vector<uint8_t> edt = {0x30};
-    EchonetLiteFrame frame = EchonetLiteFrame::createSetPropertyFrame(0x02, 0x7D, 0x01, 0x80, edt);
+    EchonetLiteFrame frame = EchonetLiteFrame::createSetPropertyFrame(0x02, EOJ_EV_CHARGER_CLASS, 0x01, 0x80, edt);
     
     // Verify frame
     EXPECT_EQ(frame.deoj_class_group_code, 0x02);
-    EXPECT_EQ(frame.deoj_class_code, 0x7D);
+    EXPECT_EQ(frame.deoj_class_code, EOJ_EV_CHARGER_CLASS);
     EXPECT_EQ(frame.deoj_instance_code, 0x01);
     EXPECT_EQ(frame.esv, 0x61); // SET request
     ASSERT_EQ(frame.properties.size(), 1);
@@ -141,7 +141,7 @@ TEST_F(EchonetLiteAdapterTest, ValidateRegisterAddress) {
     RegisterAddress valid_address;
     valid_address.type = RegisterType::EPC;
     valid_address.eoj_class_group_code = 0x02;
-    valid_address.eoj_class_code = 0x7D;
+    valid_address.eoj_class_code = EOJ_EV_CHARGER_CLASS;
     valid_address.eoj_instance_code = 0x01;
     valid_address.epc = 0x80;
     
@@ -151,7 +151,7 @@ TEST_F(EchonetLiteAdapterTest, ValidateRegisterAddress) {
     RegisterAddress invalid_type;
     invalid_type.type = RegisterType::COIL;
     invalid_type.eoj_class_group_code = 0x02;
-    invalid_type.eoj_class_code = 0x7D;
+    invalid_type.eoj_class_code = EOJ_EV_CHARGER_CLASS;
     invalid_type.eoj_instance_code = 0x01;
     invalid_type.epc = 0x80;
     
@@ -245,7 +245,7 @@ TEST_F(EchonetLiteAdapterTest, ReadRegister) {
     RegisterAddress reg_address;
     reg_address.type = RegisterType::EPC;
     reg_address.eoj_class_group_code = 0x02;
-    reg_address.eoj_class_code = 0x7D;
+    reg_address.eoj_class_code = EOJ_EV_CHARGER_CLASS;
     reg_address.eoj_instance_code = 0x01;
     reg_address.epc = 0x80;
     
@@ -303,7 +303,7 @@ TEST_F(EchonetLiteAdapterTest, WriteRegister) {
     RegisterAddress reg_address;
     reg_address.type = RegisterType::EPC;
     reg_address.eoj_class_group_code = 0x02;
-    reg_address.eoj_class_code = 0x7D;
+    reg_address.eoj_class_code = EOJ_EV_CHARGER_CLASS;
     reg_address.eoj_instance_code = 0x01;
     reg_address.epc = 0x80;
     
@@ -366,14 +366,14 @@ TEST_F(EchonetLiteAdapterTest, ReadMultipleRegisters) {
     RegisterAddress reg_address1;
     reg_address1.type = RegisterType::EPC;
     reg_address1.eoj_class_group_code = 0x02;
-    reg_address1.eoj_class_code = 0x7D;
+    reg_address1.eoj_class_code = EOJ_EV_CHARGER_CLASS;
     reg_address1.eoj_instance_code = 0x01;
     reg_address1.epc = 0x80;
     
     RegisterAddress reg_address2;
     reg_address2.type = RegisterType::EPC;
     reg_address2.eoj_class_group_code = 0x02;
-    reg_address2.eoj_class_code = 0x7D;
+    reg_address2.eoj_class_code = EOJ_EV_CHARGER_CLASS;
     reg_address2.eoj_instance_code = 0x01;
     reg_address2.epc = 0x88;
     

@@ -35,9 +35,12 @@ constexpr uint8_t EOJ_NODE_PROFILE_INSTANCE = 0x01;
 constexpr uint8_t EPC_INSTANCE_LIST_NOTIFICATION = 0xD5;
 constexpr uint8_t EPC_SELF_NODE_INSTANCE_LIST_S = 0xD6;
 
-// ECHONET Lite EV charger class
-constexpr uint8_t EOJ_EV_CHARGER_CLASS_GROUP = 0x02;
-constexpr uint8_t EOJ_EV_CHARGER_CLASS = 0x7D;
+// ECHONET Lite EV charger/discharger classes (OCPP focused)
+constexpr uint8_t EOJ_EV_CHARGER_CLASS_GROUP = 0x02;  // 住宅・設備関連機器クラスグループ
+constexpr uint8_t EOJ_EV_CHARGER_CLASS = 0x7D;        // EV充電器クラス
+constexpr uint8_t EOJ_EV_DISCHARGER_CLASS = 0x7E;     // EV充放電器クラス（V2G対応）
+constexpr uint8_t EOJ_STORAGE_BATTERY_CLASS = 0x87;   // 蓄電池クラス
+constexpr uint8_t EOJ_PV_POWER_GENERATION_CLASS = 0x88; // 太陽光発電クラス
 
 // ECHONET Lite common properties
 constexpr uint8_t EPC_OPERATION_STATUS = 0x80;
@@ -1058,9 +1061,21 @@ void EchonetLiteAdapter::handleDiscoveryResponse(const std::string& source_ip, c
                     continue;
                 }
                 
-                // Check if this is an EV charger
-                if (class_group_code == EOJ_EV_CHARGER_CLASS_GROUP && 
-                    class_code == EOJ_EV_CHARGER_CLASS) {
+                // Check if this is an EV charger or discharger (OCPP focused)
+                if (class_group_code == EOJ_EV_CHARGER_CLASS_GROUP) {
+                    std::string device_type;
+                    std::string template_id;
+                    
+                    if (class_code == EOJ_EV_CHARGER_CLASS) {
+                        device_type = "EV Charger";
+                        template_id = "echonet_lite_charger";
+                    } else if (class_code == EOJ_EV_DISCHARGER_CLASS) {
+                        device_type = "EV Charger/Discharger";
+                        template_id = "echonet_lite_charger_discharger";
+                    } else {
+                        // Skip other classes (storage battery, PV generation, etc.)
+                        continue;
+                    }
                     
                     // Generate device ID
                     std::string device_id = "echonet_" + source_ip + "_" + 
@@ -1080,11 +1095,11 @@ void EchonetLiteAdapter::handleDiscoveryResponse(const std::string& source_ip, c
                     // Create device info
                     DeviceInfo device_info;
                     device_info.id = device_id;
-                    device_info.name = "ECHONET Lite EV Charger";
+                    device_info.name = "ECHONET Lite " + device_type;
                     device_info.model = "Unknown";
                     device_info.manufacturer = "Unknown";
                     device_info.protocol = DeviceProtocol::ECHONET_LITE;
-                    device_info.template_id = "echonet_lite_generic";
+                    device_info.template_id = template_id;
                     device_info.online = true;
                     device_info.last_seen = std::chrono::system_clock::now();
                     
@@ -1099,7 +1114,7 @@ void EchonetLiteAdapter::handleDiscoveryResponse(const std::string& source_ip, c
                         discovery_callback_(device_info);
                     }
                     
-                    LOG_INFO("Discovered ECHONET Lite EV Charger: {} at {}", device_id, source_ip);
+                    LOG_INFO("Discovered ECHONET Lite {}: {} at {}", device_type, device_id, source_ip);
                 }
             }
             
@@ -1142,19 +1157,33 @@ void EchonetLiteAdapter::statusMonitorThreadFunc() {
                 continue;
             }
             
-            // Create operation status request
+            // Create operation status request for different device types
             RegisterAddress address;
             address.type = RegisterType::EPC;
             address.eoj_class_group_code = EOJ_EV_CHARGER_CLASS_GROUP;
-            address.eoj_class_code = EOJ_EV_CHARGER_CLASS;
             address.eoj_instance_code = 0x01;
             address.epc = EPC_OPERATION_STATUS;
             
-            // Read operation status
-            auto result = readRegister(device.id, address);
+            // Try different device classes (OCPP focused)
+            std::vector<uint8_t> device_classes = {
+                EOJ_EV_CHARGER_CLASS,
+                EOJ_EV_DISCHARGER_CLASS
+            };
+            
+            bool device_online = false;
+            for (uint8_t class_code : device_classes) {
+                address.eoj_class_code = class_code;
+                
+                // Read operation status
+                auto result = readRegister(device.id, address);
+                if (result.success) {
+                    device_online = true;
+                    break;
+                }
+            }
             
             // Update device status
-            updateDeviceStatus(device.id, result.success);
+            updateDeviceStatus(device.id, device_online);
         }
         
         // Sleep for monitoring interval
