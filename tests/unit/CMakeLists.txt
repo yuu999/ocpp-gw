@@ -12,10 +12,14 @@ set(TEST_SOURCES
     common/config_test.cpp
     common/logger_test.cpp
     common/metrics_collector_test.cpp
+    common/metrics_collector_test_extended.cpp
     device/device_adapter_test.cpp
     device/echonet_lite_adapter_test.cpp
     device/modbus_rtu_adapter_test.cpp
     api/admin_api_test.cpp
+    api/admin_api_test_extended.cpp
+    api/cli_manager_test.cpp
+    api/web_ui_test.cpp
 )
 
 # Create a sample test file to demonstrate Google Test usage
