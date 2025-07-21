@@ -205,7 +205,7 @@ public:
     static std::string actionToString(OcppMessageAction action);
 
 private:
-    OcppMessageProcessor(boost::asio::io_context& io_context);
+    explicit OcppMessageProcessor(boost::asio::io_context& io_context);
     
     /**
      * @brief Parse an OCPP message

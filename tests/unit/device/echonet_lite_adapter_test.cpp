@@ -37,7 +37,7 @@ TEST_F(EchonetLiteFrameTest, SerializeDeserialize) {
         0x10, 0x81,             // EHD
         0x12, 0x34,             // TID
         0x05, 0xFF, 0x01,       // SEOJ
-        0x02, 0x7D, 0x01,       // DEOJ
+        0x02, 0xA1, 0x01,       // DEOJ
         0x62,                   // ESV
         0x01,                   // OPC
         0x80, 0x00              // EPC, PDC

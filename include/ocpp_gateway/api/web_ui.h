@@ -159,7 +159,7 @@ private:
      * @brief デフォルトのHTMLページを生成
      * @return HTMLコンテンツ
      */
-    std::string generateDefaultPage();
+    std::string generateDefaultPage() __attribute__((unused));
 
     /**
      * @brief ダッシュボードページを生成

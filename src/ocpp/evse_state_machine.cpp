@@ -500,12 +500,11 @@ void EvseStateMachine::onMeterValueTimer(const boost::system::error_code& ec) {
     
     // Only send meter values if in charging state
     if (current_state_ == EvseState::CHARGING && current_transaction_) {
-        double meterValue = 0.0;
         try {
             // Try to get meter value
             auto meterValueVar = getVariable("MeterValue.Energy.Active.Import.Register");
             if (meterValueVar && !meterValueVar->value.empty()) {
-                meterValue = std::stod(meterValueVar->value);
+                double meterValue = std::stod(meterValueVar->value);
                 if (meterValueVar->scale) {
                     meterValue *= *meterValueVar->scale;
                 }

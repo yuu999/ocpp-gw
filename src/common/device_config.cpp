@@ -793,9 +793,8 @@ bool DeviceConfigCollection::loadFromYaml(const std::string& yaml_file) {
             }
             
             try {
-                if (device.validate()) {
-                    devices_.push_back(device);
-                }
+                device.validate();
+                devices_.push_back(device);
             } catch (const ConfigValidationError& e) {
                 // Log error and skip this device
                 continue;
@@ -920,9 +919,8 @@ bool DeviceConfigCollection::loadFromYamlString(const std::string& yaml_content)
             }
             
             try {
-                if (device.validate()) {
-                    devices_.push_back(device);
-                }
+                device.validate();
+                devices_.push_back(device);
             } catch (const ConfigValidationError& e) {
                 // Log error and skip this device
                 continue;
@@ -1053,9 +1051,8 @@ bool DeviceConfigCollection::loadFromJson(const std::string& json_file) {
             }
             
             try {
-                if (device.validate()) {
-                    devices_.push_back(device);
-                }
+                device.validate();
+                devices_.push_back(device);
             } catch (const ConfigValidationError& e) {
                 // Log error and skip this device
                 continue;
@@ -1182,9 +1179,8 @@ bool DeviceConfigCollection::loadFromJsonString(const std::string& json_content)
             }
             
             try {
-                if (device.validate()) {
-                    devices_.push_back(device);
-                }
+                device.validate();
+                devices_.push_back(device);
             } catch (const ConfigValidationError& e) {
                 // Log error and skip this device
                 continue;

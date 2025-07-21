@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 #include <functional>
+#include <map>
 
 namespace ocpp_gateway {
 namespace common {
@@ -26,7 +27,7 @@ public:
      * @param bind_address バインドアドレス
      * @param metrics_path メトリクスエンドポイントのパス
      */
-    PrometheusExporter(int port = 9090, const std::string& bind_address = "0.0.0.0",
+    explicit PrometheusExporter(int port = 9090, const std::string& bind_address = "0.0.0.0",
                       const std::string& metrics_path = "/metrics");
 
     /**

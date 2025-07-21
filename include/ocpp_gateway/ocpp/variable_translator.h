@@ -82,7 +82,7 @@ public:
      * 
      * @return const MappingTemplate& Mapping template
      */
-    const MappingTemplate& getMappingTemplate() const { return mapping_template_; }
+    const MappingTemplate& getMappingTemplate() const __attribute__((unused)) { return mapping_template_; }
 
 private:
     /**

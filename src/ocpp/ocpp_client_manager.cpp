@@ -6,8 +6,8 @@ namespace ocpp {
 
 // Helper struct to store EVSE state machine with its IDs
 struct EvseEntry {
-    int evseId;
-    int connectorId;
+    int evseId __attribute__((unused));
+    int connectorId __attribute__((unused));
     std::shared_ptr<EvseStateMachine> stateMachine;
 };
 

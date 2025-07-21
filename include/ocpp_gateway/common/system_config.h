@@ -88,16 +88,16 @@ public:
 
     // Getters and setters
     LogLevel getLogLevel() const { return log_level_; }
-    void setLogLevel(LogLevel level) { log_level_ = level; }
+    void setLogLevel(LogLevel level) __attribute__((unused)) { log_level_ = level; }
 
-    const LogRotationConfig& getLogRotation() const { return log_rotation_; }
-    void setLogRotation(const LogRotationConfig& config) { log_rotation_ = config; }
+    const LogRotationConfig& getLogRotation() const __attribute__((unused)) { return log_rotation_; }
+    void setLogRotation(const LogRotationConfig& config) __attribute__((unused)) { log_rotation_ = config; }
 
-    const MetricsConfig& getMetrics() const { return metrics_; }
-    void setMetrics(const MetricsConfig& config) { metrics_ = config; }
+    const MetricsConfig& getMetrics() const __attribute__((unused)) { return metrics_; }
+    void setMetrics(const MetricsConfig& config) __attribute__((unused)) { metrics_ = config; }
 
-    const SecurityConfig& getSecurity() const { return security_; }
-    void setSecurity(const SecurityConfig& config) { security_ = config; }
+    const SecurityConfig& getSecurity() const __attribute__((unused)) { return security_; }
+    void setSecurity(const SecurityConfig& config) __attribute__((unused)) { security_ = config; }
 
 private:
     LogLevel log_level_;

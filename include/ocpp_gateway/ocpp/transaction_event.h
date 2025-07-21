@@ -277,7 +277,7 @@ public:
      * @param idTokenInfo ID token info (optional)
      * @param chargingPriority Charging priority (optional)
      */
-    TransactionEventResponse(const std::string& messageId,
+    explicit TransactionEventResponse(const std::string& messageId,
                             const std::optional<nlohmann::json>& idTokenInfo = std::nullopt,
                             const std::optional<int>& chargingPriority = std::nullopt);
     

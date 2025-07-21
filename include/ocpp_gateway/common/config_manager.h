@@ -158,14 +158,14 @@ private:
     /**
      * @brief Stop monitoring configuration files for changes
      */
-    void stopFileMonitoring();
+    void stopFileMonitoring() __attribute__((unused));
 
     /**
      * @brief Handle file change event
      * 
      * @param file_path Path to changed file
      */
-    void handleFileChange(const std::string& file_path);
+    void handleFileChange(const std::string& file_path) __attribute__((unused));
 
     std::string config_dir_;
     SystemConfig system_config_;

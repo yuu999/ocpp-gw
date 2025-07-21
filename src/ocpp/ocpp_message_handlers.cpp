@@ -216,9 +216,8 @@ std::unique_ptr<OcppMessage> AuthorizeHandler::handleMessage(const OcppMessage& 
     LOG_INFO("Handling Authorize message");
     
     // Extract idToken from request
-    std::string idToken;
     try {
-        idToken = message.payload["idToken"]["idToken"].get<std::string>();
+        std::string idToken = message.payload["idToken"]["idToken"].get<std::string>();
         LOG_INFO("Authorization requested for ID: {}", idToken);
     } catch (const std::exception& e) {
         LOG_ERROR("Failed to extract idToken: {}", e.what());
@@ -254,12 +253,10 @@ std::unique_ptr<OcppMessage> RemoteStartTransactionHandler::handleMessage(const 
     LOG_INFO("Handling RemoteStartTransaction message");
     
     // Extract idToken and evseId from request
-    std::string idToken;
-    int evseId = 0;
-    
     try {
-        idToken = message.payload["idToken"]["idToken"].get<std::string>();
+        std::string idToken = message.payload["idToken"]["idToken"].get<std::string>();
         
+        int evseId = 0;
         if (message.payload.contains("evseId")) {
             evseId = message.payload["evseId"].get<int>();
         }
@@ -291,10 +288,8 @@ std::unique_ptr<OcppMessage> RemoteStopTransactionHandler::handleMessage(const O
     LOG_INFO("Handling RemoteStopTransaction message");
     
     // Extract transactionId from request
-    std::string transactionId;
-    
     try {
-        transactionId = message.payload["transactionId"].get<std::string>();
+        std::string transactionId = message.payload["transactionId"].get<std::string>();
         LOG_INFO("Remote stop requested for transaction: {}", transactionId);
     } catch (const std::exception& e) {
         LOG_ERROR("Failed to extract transactionId: {}", e.what());
@@ -355,12 +350,10 @@ std::unique_ptr<OcppMessage> TriggerMessageHandler::handleMessage(const OcppMess
     LOG_INFO("Handling TriggerMessage message");
     
     // Extract requestedMessage from request
-    std::string requestedMessage;
-    int evseId = 0;
-    
     try {
-        requestedMessage = message.payload["requestedMessage"].get<std::string>();
+        std::string requestedMessage = message.payload["requestedMessage"].get<std::string>();
         
+        int evseId = 0;
         if (message.payload.contains("evseId")) {
             evseId = message.payload["evseId"].get<int>();
         }
@@ -440,12 +433,10 @@ std::unique_ptr<OcppMessage> DataTransferHandler::handleMessage(const OcppMessag
     LOG_INFO("Handling DataTransfer message");
     
     // Extract vendorId and messageId from request
-    std::string vendorId;
-    std::string messageId;
-    
     try {
-        vendorId = message.payload["vendorId"].get<std::string>();
+        std::string vendorId = message.payload["vendorId"].get<std::string>();
         
+        std::string messageId;
         if (message.payload.contains("messageId")) {
             messageId = message.payload["messageId"].get<std::string>();
         }

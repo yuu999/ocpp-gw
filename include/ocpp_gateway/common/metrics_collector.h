@@ -30,7 +30,7 @@ struct MetricValue {
     std::map<std::string, std::string> labels;
     
     MetricValue() : value(0.0) {}
-    MetricValue(double v) : value(v), timestamp(std::chrono::system_clock::now()) {}
+    explicit MetricValue(double v) : value(v), timestamp(std::chrono::system_clock::now()) {}
 };
 
 /**

@@ -164,18 +164,18 @@ void WebUI::runServer() {
                 std::string query_string = target.substr(query_pos + 1);
                 target = target.substr(0, query_pos);
                 
-                size_t start = 0;
+                size_t param_start = 0;
                 size_t end = 0;
-                while ((end = query_string.find('&', start)) != std::string::npos) {
-                    std::string param = query_string.substr(start, end - start);
+                while ((end = query_string.find('&', param_start)) != std::string::npos) {
+                    std::string param = query_string.substr(param_start, end - param_start);
                     size_t eq_pos = param.find('=');
                     if (eq_pos != std::string::npos) {
                         query_params[param.substr(0, eq_pos)] = param.substr(eq_pos + 1);
                     }
-                    start = end + 1;
+                    param_start = end + 1;
                 }
                 
-                std::string param = query_string.substr(start);
+                std::string param = query_string.substr(param_start);
                 size_t eq_pos = param.find('=');
                 if (eq_pos != std::string::npos) {
                     query_params[param.substr(0, eq_pos)] = param.substr(eq_pos + 1);
@@ -343,8 +343,8 @@ std::string WebUI::generateDefaultPage() {
 
 std::string WebUI::generateDashboard() {
     try {
-        auto& config_manager = config::ConfigManager::getInstance();
-        auto& metrics_collector = common::MetricsCollector::getInstance();
+        const auto& config_manager = config::ConfigManager::getInstance();
+        const auto& metrics_collector = common::MetricsCollector::getInstance();
         
         std::ostringstream html;
         html << "<!DOCTYPE html>\n";
@@ -434,7 +434,7 @@ std::string WebUI::generateDashboard() {
 
 std::string WebUI::generateDevicePage() {
     try {
-        auto& config_manager = config::ConfigManager::getInstance();
+        const auto& config_manager = config::ConfigManager::getInstance();
         const auto& device_configs = config_manager.getDeviceConfigs();
         
         std::ostringstream html;
@@ -508,7 +508,7 @@ std::string WebUI::generateDevicePage() {
 
 std::string WebUI::generateConfigPage() {
     try {
-        auto& config_manager = config::ConfigManager::getInstance();
+        const auto& config_manager = config::ConfigManager::getInstance();
         
         std::ostringstream html;
         html << "<!DOCTYPE html>\n";

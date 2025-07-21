@@ -609,18 +609,18 @@ CliResult CliManager::handleMetricsReset(const std::vector<std::string>& args) {
         auto& metrics_collector = common::MetricsCollector::getInstance();
         
         if (args.size() > 2) {
-            // 特定のメトリクスをリセット
-            std::string metric_name = args[2];
-            metrics_collector.resetMetrics(metric_name);
-            return CliResult(true, translate("metrics_reset_success", "メトリクス '") + metric_name + translate("metrics_reset_success_suffix", "' をリセットしました"));
-        } else {
-            // 全メトリクスをリセット
-            if (args.size() > 2 && args[2] == "--all") {
+            if (args[2] == "--all") {
+                // 全メトリクスをリセット
                 metrics_collector.resetMetrics();
                 return CliResult(true, translate("metrics_reset_all_success", "すべてのメトリクスをリセットしました"));
             } else {
-                return CliResult(false, translate("metrics_reset_usage", "使用法: metrics reset [メトリクス名] または metrics reset --all"));
+                // 特定のメトリクスをリセット
+                std::string metric_name = args[2];
+                metrics_collector.resetMetrics(metric_name);
+                return CliResult(true, translate("metrics_reset_success", "メトリクス '") + metric_name + translate("metrics_reset_success_suffix", "' をリセットしました"));
             }
+        } else {
+            return CliResult(false, translate("metrics_reset_usage", "使用法: metrics reset [メトリクス名] または metrics reset --all"));
         }
     } catch (const std::exception& e) {
         return CliResult(false, translate("metrics_reset_error", "メトリクスリセット中にエラーが発生しました: ") + std::string(e.what()));

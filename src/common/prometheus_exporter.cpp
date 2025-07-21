@@ -19,6 +19,7 @@ PrometheusExporter::PrometheusExporter(int port, const std::string& bind_address
                                       const std::string& metrics_path)
     : port_(port), bind_address_(bind_address), metrics_path_(metrics_path),
       running_(false), health_check_enabled_(true),
+      global_labels_(), metrics_filter_(),
       metrics_collector_(MetricsCollector::getInstance()),
       requests_total_(0), requests_errors_(0) {
     
@@ -93,7 +94,9 @@ void PrometheusExporter::runServer() {
         auto const port = static_cast<unsigned short>(port_);
 
         net::io_context ioc{1};
-        beast::tcp_acceptor acceptor{ioc, {address, port}};
+        net::ip::tcp::acceptor acceptor{ioc, {address, port}};
+        
+        LOG_INFO("Prometheusエクスポーターサーバーを開始: {}:{}", bind_address_, port);
 
         while (running_.load()) {
             beast::tcp_stream stream{ioc};
@@ -159,7 +162,7 @@ void PrometheusExporter::runServer() {
 
             // 接続を閉じる
             beast::error_code ec;
-            stream.socket().shutdown(beast::tcp_socket::shutdown_send, ec);
+            stream.socket().shutdown(net::ip::tcp::socket::shutdown_send, ec);
         }
     } catch (const std::exception& e) {
         LOG_ERROR("Prometheusエクスポーターサーバーエラー: {}", e.what());

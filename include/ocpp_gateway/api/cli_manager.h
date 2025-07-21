@@ -96,10 +96,10 @@ private:
     CliResult handleDeviceTest(const std::vector<std::string>& args);
 
     // マッピング管理コマンド
-    CliResult handleMappingList(const std::vector<std::string>& args);
-    CliResult handleMappingShow(const std::vector<std::string>& args);
-    CliResult handleMappingTest(const std::vector<std::string>& args);
-    CliResult handleMappingValidate(const std::vector<std::string>& args);
+    CliResult handleMappingList(const std::vector<std::string>& args) __attribute__((unused));
+    CliResult handleMappingShow(const std::vector<std::string>& args) __attribute__((unused));
+    CliResult handleMappingTest(const std::vector<std::string>& args) __attribute__((unused));
+    CliResult handleMappingValidate(const std::vector<std::string>& args) __attribute__((unused));
 
     // メトリクスコマンド
     CliResult handleMetricsShow(const std::vector<std::string>& args);
@@ -107,16 +107,16 @@ private:
     CliResult handleMetricsExport(const std::vector<std::string>& args);
 
     // ログコマンド
-    CliResult handleLogShow(const std::vector<std::string>& args);
-    CliResult handleLogLevel(const std::vector<std::string>& args);
-    CliResult handleLogRotate(const std::vector<std::string>& args);
+    CliResult handleLogShow(const std::vector<std::string>& args) __attribute__((unused));
+    CliResult handleLogLevel(const std::vector<std::string>& args) __attribute__((unused));
+    CliResult handleLogRotate(const std::vector<std::string>& args) __attribute__((unused));
 
     // ユーティリティ関数
-    std::string formatJson(const std::string& json);
+    std::string formatJson(const std::string& json) __attribute__((unused));
     std::string formatTable(const std::vector<std::vector<std::string>>& data, 
                            const std::vector<std::string>& headers);
     std::string formatDeviceInfo(const config::DeviceConfig& device);
-    std::string formatMetrics(const std::map<std::string, double>& metrics);
+    std::string formatMetrics(const std::map<std::string, double>& metrics) __attribute__((unused));
     
     // 国際化サポート
     std::string translate(const std::string& key, const std::string& default_value = "") const;

@@ -66,7 +66,7 @@ struct SecurityConfig {
 
     bool validate() const {
         // TLS paths can be empty if TLS is not used
-        if (!tls_cert_path.empty() && !tls_key_path.empty()) {
+        if (!tls_cert_path.empty() || !tls_key_path.empty()) {
             // If TLS is enabled, validate paths
             if (tls_cert_path.empty()) {
                 throw ConfigValidationError("TLS certificate path is required when TLS is enabled");

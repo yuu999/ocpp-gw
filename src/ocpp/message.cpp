@@ -239,7 +239,9 @@ std::shared_ptr<Message> createMessageFromJson(const std::string& json) {
         }
         
         int messageTypeInt = j[0].get<int>();
+        (void)messageTypeInt; // Suppress unused variable warning
         MessageType messageType = static_cast<MessageType>(messageTypeInt);
+        (void)messageType; // Suppress unused variable warning
         
         // Factory pattern would be better here, but for simplicity we'll use a switch
         // In a real implementation, we would register message handlers for each action

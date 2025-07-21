@@ -66,7 +66,8 @@ bool TlsManager::loadConfiguration(const config::SecurityConfig& config) {
 
 bool TlsManager::validateConfiguration() const {
     try {
-        return config_.validate();
+        config_.validate();
+        return true;
     } catch (const config::ConfigValidationError& e) {
         LOG_ERROR("TLS configuration validation error: {}", e.what());
         return false;

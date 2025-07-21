@@ -29,7 +29,7 @@ enum class VariableDataType {
  * @param type Data type string
  * @return VariableDataType Corresponding data type
  */
-inline VariableDataType dataTypeFromString(const std::string& type) {
+inline VariableDataType dataTypeFromString(const std::string& type) __attribute__((unused)) {
     if (type == "boolean") {
         return VariableDataType::BOOLEAN;
     } else if (type == "integer" || type == "int" || type == "uint16" || type == "int32" || type == "uint32") {
@@ -52,7 +52,7 @@ inline VariableDataType dataTypeFromString(const std::string& type) {
  * @param type Data type
  * @return std::string Corresponding data type string
  */
-inline std::string dataTypeToString(VariableDataType type) {
+inline std::string dataTypeToString(VariableDataType type) __attribute__((unused)) {
     switch (type) {
         case VariableDataType::BOOLEAN:
             return "boolean";
@@ -224,13 +224,13 @@ public:
     void setId(const std::string& id) { id_ = id; }
 
     const std::string& getDescription() const { return description_; }
-    void setDescription(const std::string& description) { description_ = description; }
+    void setDescription(const std::string& description) __attribute__((unused)) { description_ = description; }
 
     const std::optional<std::string>& getParentId() const { return parent_id_; }
     void setParentId(const std::optional<std::string>& parent_id) { parent_id_ = parent_id; }
 
-    const std::vector<OcppVariable>& getVariables() const { return variables_; }
-    void setVariables(const std::vector<OcppVariable>& variables) { variables_ = variables; }
+    const std::vector<OcppVariable>& getVariables() const __attribute__((unused)) { return variables_; }
+    void setVariables(const std::vector<OcppVariable>& variables) __attribute__((unused)) { variables_ = variables; }
 
     /**
      * @brief Add a variable to the template
@@ -349,7 +349,7 @@ public:
      * 
      * @return const std::vector<MappingTemplate>& Vector of mapping templates
      */
-    const std::vector<MappingTemplate>& getTemplates() const { return templates_; }
+    const std::vector<MappingTemplate>& getTemplates() const __attribute__((unused)) { return templates_; }
 
     /**
      * @brief Enable hot reload for mapping templates
@@ -372,14 +372,14 @@ public:
      * @return true if hot reload is enabled
      * @return false if hot reload is disabled
      */
-    bool isHotReloadEnabled() const { return hot_reload_enabled_; }
+    bool isHotReloadEnabled() const __attribute__((unused)) { return hot_reload_enabled_; }
 
     /**
      * @brief Get the directory being watched for changes
      * 
      * @return std::string Directory path or empty string if hot reload is disabled
      */
-    std::string getWatchedDirectory() const { return watched_directory_; }
+    std::string getWatchedDirectory() const __attribute__((unused)) { return watched_directory_; }
 
     /**
      * @brief Register a callback for template change notifications
