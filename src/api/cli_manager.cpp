@@ -1,6 +1,7 @@
 #include "ocpp_gateway/api/cli_manager.h"
 #include "ocpp_gateway/common/logger.h"
 #include "ocpp_gateway/common/metrics_collector.h"
+#include "ocpp_gateway/common/language_manager.h"
 #include <json/json.h>
 #include <iomanip>
 #include <sstream>
@@ -10,55 +11,157 @@ namespace ocpp_gateway {
 namespace api {
 
 CliManager::CliManager() : config_manager_(config::ConfigManager::getInstance()) {
+    // Initialize language manager if not already initialized
+    if (common::LanguageManager::getInstance().getAvailableLanguages().empty()) {
+        common::LanguageManager::getInstance().initialize("en", "resources/lang");
+    }
+    
     // 基本コマンドの登録
-    registerCommand("help", "ヘルプメッセージを表示", 
+    registerCommand("help", translate("cmd_help_desc", "ヘルプメッセージを表示"), 
                    [this](const std::vector<std::string>& args) { return handleHelp(args); });
     
-    registerCommand("version", "バージョン情報を表示",
+    registerCommand("version", translate("cmd_version_desc", "バージョン情報を表示"),
                    [this](const std::vector<std::string>& args) { return handleVersion(args); });
     
-    registerCommand("status", "システム状態を表示",
+    registerCommand("status", translate("cmd_status_desc", "システム状態を表示"),
                    [this](const std::vector<std::string>& args) { return handleStatus(args); });
     
-    registerCommand("config", "設定管理コマンド",
+    registerCommand("config", translate("cmd_config_desc", "設定管理コマンド"),
                    [this](const std::vector<std::string>& args) { return handleConfig(args); });
     
-    registerCommand("device", "デバイス管理コマンド",
+    registerCommand("device", translate("cmd_device_desc", "デバイス管理コマンド"),
                    [this](const std::vector<std::string>& args) { return handleDevice(args); });
     
-    registerCommand("mapping", "マッピング管理コマンド",
+    registerCommand("mapping", translate("cmd_mapping_desc", "マッピング管理コマンド"),
                    [this](const std::vector<std::string>& args) { return handleMapping(args); });
     
-    registerCommand("metrics", "メトリクス管理コマンド",
+    registerCommand("metrics", translate("cmd_metrics_desc", "メトリクス管理コマンド"),
                    [this](const std::vector<std::string>& args) { return handleMetrics(args); });
     
-    registerCommand("health", "ヘルスチェック",
+    registerCommand("health", translate("cmd_health_desc", "ヘルスチェック"),
                    [this](const std::vector<std::string>& args) { return handleHealth(args); });
     
-    registerCommand("log", "ログ管理コマンド",
+    registerCommand("log", translate("cmd_log_desc", "ログ管理コマンド"),
                    [this](const std::vector<std::string>& args) { return handleLog(args); });
+                   
+    // Add language command for internationalization
+    registerCommand("language", translate("cmd_language_desc", "言語設定コマンド"),
+                   [this](const std::vector<std::string>& args) { return handleLanguage(args); });
 }
 
 CliManager::~CliManager() {
 }
 
+std::string CliManager::translate(const std::string& key, const std::string& default_value) const {
+    return common::LanguageManager::getInstance().translate(key, default_value);
+}
+
+bool CliManager::setLanguage(const std::string& language) {
+    return common::LanguageManager::getInstance().setLanguage(language);
+}
+
+std::string CliManager::getCurrentLanguage() const {
+    return common::LanguageManager::getInstance().getCurrentLanguage();
+}
+
+CliResult CliManager::handleLanguage(const std::vector<std::string>& args) {
+    // If no arguments, show current language and available languages
+    if (args.size() == 1) {
+        std::ostringstream oss;
+        std::string current_lang = getCurrentLanguage();
+        std::vector<std::string> available_langs = common::LanguageManager::getInstance().getAvailableLanguages();
+        
+        oss << translate("current_language", "現在の言語") << ": ";
+        if (current_lang == "en") {
+            oss << translate("english", "英語") << " (English)\n";
+        } else if (current_lang == "ja") {
+            oss << translate("japanese", "日本語") << " (Japanese)\n";
+        } else {
+            oss << current_lang << "\n";
+        }
+        
+        oss << "\n" << translate("available_languages", "利用可能な言語") << ":\n";
+        for (const auto& lang : available_langs) {
+            oss << "- ";
+            if (lang == "en") {
+                oss << "English (" << translate("english", "英語") << ")";
+            } else if (lang == "ja") {
+                oss << "Japanese (" << translate("japanese", "日本語") << ")";
+            } else {
+                oss << lang;
+            }
+            
+            if (lang == current_lang) {
+                oss << " [" << translate("current", "現在") << "]";
+            }
+            oss << "\n";
+        }
+        
+        oss << "\n" << translate("language_usage", "使用法: language <set|list>") << "\n";
+        oss << "  set <lang>  - " << translate("language_set_desc", "言語を設定 (例: en, ja)") << "\n";
+        oss << "  list        - " << translate("language_list_desc", "利用可能な言語を一覧表示") << "\n";
+        
+        return CliResult(true, "", oss.str());
+    }
+    
+    // Handle subcommands
+    std::string subcommand = args[1];
+    
+    if (subcommand == "set") {
+        if (args.size() < 3) {
+            return CliResult(false, translate("language_set_usage", "使用法: language set <lang>"));
+        }
+        
+        std::string lang = args[2];
+        if (setLanguage(lang)) {
+            return CliResult(true, translate("language_set_success", "言語を設定しました: ") + lang);
+        } else {
+            return CliResult(false, translate("language_set_error", "言語の設定に失敗しました: ") + lang);
+        }
+    } else if (subcommand == "list") {
+        std::ostringstream oss;
+        std::vector<std::string> available_langs = common::LanguageManager::getInstance().getAvailableLanguages();
+        
+        oss << translate("available_languages", "利用可能な言語") << ":\n";
+        for (const auto& lang : available_langs) {
+            oss << "- ";
+            if (lang == "en") {
+                oss << "English (" << translate("english", "英語") << ")";
+            } else if (lang == "ja") {
+                oss << "Japanese (" << translate("japanese", "日本語") << ")";
+            } else {
+                oss << lang;
+            }
+            
+            if (lang == getCurrentLanguage()) {
+                oss << " [" << translate("current", "現在") << "]";
+            }
+            oss << "\n";
+        }
+        
+        return CliResult(true, "", oss.str());
+    } else {
+        return CliResult(false, translate("unknown_subcommand", "不明なサブコマンドです: ") + subcommand);
+    }
+}
+
 CliResult CliManager::executeCommand(const std::vector<std::string>& args) {
     if (args.empty()) {
-        return CliResult(false, "コマンドが指定されていません。'help'でヘルプを確認してください。");
+        return CliResult(false, translate("no_command", "コマンドが指定されていません。'help'でヘルプを確認してください。"));
     }
 
     std::string command = args[0];
     auto it = commands_.find(command);
     
     if (it == commands_.end()) {
-        return CliResult(false, "不明なコマンドです: " + command + "。'help'でヘルプを確認してください。");
+        return CliResult(false, translate("unknown_command", "不明なコマンドです: ") + command + translate("check_help", "。'help'でヘルプを確認してください。"));
     }
 
     try {
         return it->second.handler(args);
     } catch (const std::exception& e) {
-        LOG_ERROR("CLIコマンド実行エラー [{}]: {}", command, e.what());
-        return CliResult(false, "コマンド実行中にエラーが発生しました: " + std::string(e.what()));
+        LOG_ERROR(translate("cli_command_error", "CLIコマンド実行エラー [{}]: {}"), command, e.what());
+        return CliResult(false, translate("command_execution_error", "コマンド実行中にエラーが発生しました: ") + std::string(e.what()));
     }
 }
 
@@ -70,8 +173,8 @@ void CliManager::registerCommand(const std::string& command,
 
 std::string CliManager::getHelpMessage() const {
     std::ostringstream oss;
-    oss << "OCPP 2.0.1 ゲートウェイ・ミドルウェア CLI\n\n";
-    oss << "利用可能なコマンド:\n";
+    oss << "OCPP 2.0.1 " << translate("gateway_middleware", "ゲートウェイ・ミドルウェア") << " CLI\n\n";
+    oss << translate("available_commands", "利用可能なコマンド") << ":\n";
     
     // 最大コマンド長を計算
     size_t max_cmd_length = 0;
@@ -84,7 +187,7 @@ std::string CliManager::getHelpMessage() const {
             << cmd.first << " - " << cmd.second.description << "\n";
     }
     
-    oss << "\n詳細なヘルプは 'help <コマンド>' で確認できます。\n";
+    oss << "\n" << translate("detailed_help", "詳細なヘルプは 'help <コマンド>' で確認できます。") << "\n";
     return oss.str();
 }
 
@@ -96,59 +199,63 @@ CliResult CliManager::handleHelp(const std::vector<std::string>& args) {
         auto it = commands_.find(command);
         
         if (it == commands_.end()) {
-            return CliResult(false, "不明なコマンドです: " + command);
+            return CliResult(false, translate("unknown_command", "不明なコマンドです: ") + command);
         }
         
         std::ostringstream oss;
-        oss << "コマンド: " << command << "\n";
-        oss << "説明: " << it->second.description << "\n\n";
+        oss << translate("command", "コマンド") << ": " << command << "\n";
+        oss << translate("description", "説明") << ": " << it->second.description << "\n\n";
         
         // コマンド固有のヘルプ
         if (command == "config") {
-            oss << "サブコマンド:\n";
-            oss << "  show     - 現在の設定を表示\n";
-            oss << "  reload   - 設定を再読み込み\n";
-            oss << "  validate - 設定を検証\n";
-            oss << "  backup   - 設定をバックアップ\n";
-            oss << "  restore  - 設定を復元\n";
+            oss << translate("subcommands", "サブコマンド") << ":\n";
+            oss << "  show     - " << translate("config_show_desc", "現在の設定を表示") << "\n";
+            oss << "  reload   - " << translate("config_reload_desc", "設定を再読み込み") << "\n";
+            oss << "  validate - " << translate("config_validate_desc", "設定を検証") << "\n";
+            oss << "  backup   - " << translate("config_backup_desc", "設定をバックアップ") << "\n";
+            oss << "  restore  - " << translate("config_restore_desc", "設定を復元") << "\n";
         } else if (command == "device") {
-            oss << "サブコマンド:\n";
-            oss << "  list              - デバイス一覧を表示\n";
-            oss << "  show <id>         - デバイス詳細を表示\n";
-            oss << "  add <file>        - デバイスを追加\n";
-            oss << "  update <id> <file> - デバイス設定を更新\n";
-            oss << "  delete <id>       - デバイスを削除\n";
-            oss << "  test <id>         - デバイス通信をテスト\n";
+            oss << translate("subcommands", "サブコマンド") << ":\n";
+            oss << "  list              - " << translate("device_list_desc", "デバイス一覧を表示") << "\n";
+            oss << "  show <id>         - " << translate("device_show_desc", "デバイス詳細を表示") << "\n";
+            oss << "  add <file>        - " << translate("device_add_desc", "デバイスを追加") << "\n";
+            oss << "  update <id> <file> - " << translate("device_update_desc", "デバイス設定を更新") << "\n";
+            oss << "  delete <id>       - " << translate("device_delete_desc", "デバイスを削除") << "\n";
+            oss << "  test <id>         - " << translate("device_test_desc", "デバイス通信をテスト") << "\n";
         } else if (command == "mapping") {
-            oss << "サブコマンド:\n";
-            oss << "  list               - マッピング一覧を表示\n";
-            oss << "  show <template>    - マッピング詳細を表示\n";
-            oss << "  test <device_id>   - マッピングをテスト\n";
-            oss << "  validate <file>    - マッピングファイルを検証\n";
+            oss << translate("subcommands", "サブコマンド") << ":\n";
+            oss << "  list               - " << translate("mapping_list_desc", "マッピング一覧を表示") << "\n";
+            oss << "  show <template>    - " << translate("mapping_show_desc", "マッピング詳細を表示") << "\n";
+            oss << "  test <device_id>   - " << translate("mapping_test_desc", "マッピングをテスト") << "\n";
+            oss << "  validate <file>    - " << translate("mapping_validate_desc", "マッピングファイルを検証") << "\n";
         } else if (command == "metrics") {
-            oss << "サブコマンド:\n";
-            oss << "  show       - メトリクスを表示\n";
-            oss << "  reset      - メトリクスをリセット\n";
-            oss << "  export     - メトリクスをエクスポート\n";
+            oss << translate("subcommands", "サブコマンド") << ":\n";
+            oss << "  show       - " << translate("metrics_show_desc", "メトリクスを表示") << "\n";
+            oss << "  reset      - " << translate("metrics_reset_desc", "メトリクスをリセット") << "\n";
+            oss << "  export     - " << translate("metrics_export_desc", "メトリクスをエクスポート") << "\n";
         } else if (command == "log") {
-            oss << "サブコマンド:\n";
-            oss << "  show       - ログを表示\n";
-            oss << "  level <lvl> - ログレベルを設定\n";
-            oss << "  rotate     - ログローテーションを実行\n";
+            oss << translate("subcommands", "サブコマンド") << ":\n";
+            oss << "  show       - " << translate("log_show_desc", "ログを表示") << "\n";
+            oss << "  level <lvl> - " << translate("log_level_desc", "ログレベルを設定") << "\n";
+            oss << "  rotate     - " << translate("log_rotate_desc", "ログローテーションを実行") << "\n";
+        } else if (command == "language") {
+            oss << translate("subcommands", "サブコマンド") << ":\n";
+            oss << "  set <lang> - " << translate("language_set_desc", "言語を設定 (例: en, ja)") << "\n";
+            oss << "  list       - " << translate("language_list_desc", "利用可能な言語を一覧表示") << "\n";
         }
         
         return CliResult(true, "", oss.str());
     } else {
-        return CliResult(false, "使用法: help [コマンド]");
+        return CliResult(false, translate("help_usage", "使用法: help [コマンド]"));
     }
 }
 
 CliResult CliManager::handleVersion(const std::vector<std::string>& args) {
     std::ostringstream oss;
-    oss << "OCPP 2.0.1 ゲートウェイ・ミドルウェア\n";
-    oss << "バージョン: 1.0.0\n";
-    oss << "ビルド日時: " << __DATE__ << " " << __TIME__ << "\n";
-    oss << "C++標準: C++17\n";
+    oss << "OCPP 2.0.1 " << translate("gateway_middleware", "ゲートウェイ・ミドルウェア") << "\n";
+    oss << translate("version", "バージョン") << ": 1.0.0\n";
+    oss << translate("build_date_time", "ビルド日時") << ": " << __DATE__ << " " << __TIME__ << "\n";
+    oss << translate("cpp_standard", "C++標準") << ": C++17\n";
     
     return CliResult(true, "", oss.str());
 }
@@ -156,33 +263,46 @@ CliResult CliManager::handleVersion(const std::vector<std::string>& args) {
 CliResult CliManager::handleStatus(const std::vector<std::string>& args) {
     try {
         std::ostringstream oss;
-        oss << "システム状態:\n";
+        oss << translate("system_status", "システム状態") << ":\n";
         oss << "================\n";
         
         // システム設定情報
         const auto& system_config = config_manager_.getSystemConfig();
-        oss << "ログレベル: " << system_config.getLogLevel() << "\n";
-        oss << "最大充電ポイント数: " << system_config.getMaxChargePoints() << "\n";
+        oss << translate("log_level", "ログレベル") << ": " << system_config.getLogLevel() << "\n";
+        oss << translate("max_charge_points", "最大充電ポイント数") << ": " << system_config.getMaxChargePoints() << "\n";
         
         // デバイス情報
         const auto& device_configs = config_manager_.getDeviceConfigs();
-        oss << "登録デバイス数: " << device_configs.getDevices().size() << "\n";
+        oss << translate("registered_devices_count", "登録デバイス数") << ": " << device_configs.getDevices().size() << "\n";
         
         // メトリクス情報（簡易版）
-        oss << "\nメトリクス:\n";
+        oss << "\n" << translate("metrics", "メトリクス") << ":\n";
         oss << "----------\n";
-        oss << "稼働時間: " << std::time(nullptr) << " 秒\n";
-        oss << "設定最終更新: " << "不明" << "\n";
+        oss << translate("uptime", "稼働時間") << ": " << std::time(nullptr) << " " << translate("seconds", "秒") << "\n";
+        oss << translate("config_last_update", "設定最終更新") << ": " << translate("unknown", "不明") << "\n";
+        
+        // 言語情報
+        oss << "\n" << translate("language_info", "言語情報") << ":\n";
+        oss << "----------\n";
+        oss << translate("current_language", "現在の言語") << ": ";
+        std::string current_lang = getCurrentLanguage();
+        if (current_lang == "en") {
+            oss << translate("english", "英語") << " (English)\n";
+        } else if (current_lang == "ja") {
+            oss << translate("japanese", "日本語") << " (Japanese)\n";
+        } else {
+            oss << current_lang << "\n";
+        }
         
         return CliResult(true, "", oss.str());
     } catch (const std::exception& e) {
-        return CliResult(false, "システム状態の取得に失敗しました: " + std::string(e.what()));
+        return CliResult(false, translate("system_status_error", "システム状態の取得に失敗しました: ") + std::string(e.what()));
     }
 }
 
 CliResult CliManager::handleConfig(const std::vector<std::string>& args) {
     if (args.size() < 2) {
-        return CliResult(false, "使用法: config <show|reload|validate|backup|restore> [オプション]");
+        return CliResult(false, translate("config_usage", "使用法: config <show|reload|validate|backup|restore> [オプション]"));
     }
     
     std::string subcommand = args[1];
@@ -198,81 +318,81 @@ CliResult CliManager::handleConfig(const std::vector<std::string>& args) {
     } else if (subcommand == "restore") {
         return handleConfigRestore(args);
     } else {
-        return CliResult(false, "不明なサブコマンドです: " + subcommand);
+        return CliResult(false, translate("unknown_subcommand", "不明なサブコマンドです: ") + subcommand);
     }
 }
 
 CliResult CliManager::handleConfigShow(const std::vector<std::string>& args) {
     try {
         std::ostringstream oss;
-        oss << "現在の設定:\n";
+        oss << translate("current_config", "現在の設定") << ":\n";
         oss << "============\n\n";
         
         // システム設定
         const auto& system_config = config_manager_.getSystemConfig();
-        oss << "[システム設定]\n";
-        oss << "ログレベル: " << system_config.getLogLevel() << "\n";
-        oss << "最大充電ポイント数: " << system_config.getMaxChargePoints() << "\n";
+        oss << "[" << translate("system_config", "システム設定") << "]\n";
+        oss << translate("log_level", "ログレベル") << ": " << system_config.getLogLevel() << "\n";
+        oss << translate("max_charge_points", "最大充電ポイント数") << ": " << system_config.getMaxChargePoints() << "\n";
         
         // CSMS設定
         const auto& csms_config = config_manager_.getCsmsConfig();
-        oss << "\n[CSMS設定]\n";
-        oss << "URL: " << csms_config.getUrl() << "\n";
-        oss << "再接続間隔: " << csms_config.getReconnectInterval() << " 秒\n";
-        oss << "最大再接続回数: " << csms_config.getMaxReconnectAttempts() << "\n";
+        oss << "\n[" << translate("csms_config", "CSMS設定") << "]\n";
+        oss << translate("url", "URL") << ": " << csms_config.getUrl() << "\n";
+        oss << translate("reconnect_interval", "再接続間隔") << ": " << csms_config.getReconnectInterval() << " " << translate("seconds", "秒") << "\n";
+        oss << translate("max_reconnect_attempts", "最大再接続回数") << ": " << csms_config.getMaxReconnectAttempts() << "\n";
         
         // デバイス設定
         const auto& device_configs = config_manager_.getDeviceConfigs();
-        oss << "\n[デバイス設定]\n";
-        oss << "デバイス数: " << device_configs.getDevices().size() << "\n";
+        oss << "\n[" << translate("device_config", "デバイス設定") << "]\n";
+        oss << translate("device_count", "デバイス数") << ": " << device_configs.getDevices().size() << "\n";
         
         for (const auto& device : device_configs.getDevices()) {
             oss << "  - " << device.getId() << " (" << device.getName() << ")\n";
-            oss << "    プロトコル: " << device.getProtocol() << "\n";
-            oss << "    テンプレート: " << device.getTemplateName() << "\n";
-            oss << "    有効: " << (device.isEnabled() ? "はい" : "いいえ") << "\n";
+            oss << "    " << translate("protocol", "プロトコル") << ": " << device.getProtocol() << "\n";
+            oss << "    " << translate("template", "テンプレート") << ": " << device.getTemplateName() << "\n";
+            oss << "    " << translate("enabled", "有効") << ": " << (device.isEnabled() ? translate("yes", "はい") : translate("no", "いいえ")) << "\n";
         }
         
         return CliResult(true, "", oss.str());
     } catch (const std::exception& e) {
-        return CliResult(false, "設定の取得に失敗しました: " + std::string(e.what()));
+        return CliResult(false, translate("config_get_error", "設定の取得に失敗しました: ") + std::string(e.what()));
     }
 }
 
 CliResult CliManager::handleConfigReload(const std::vector<std::string>& args) {
     try {
         if (config_manager_.reloadAllConfigs()) {
-            return CliResult(true, "設定を再読み込みしました");
+            return CliResult(true, translate("config_reload_success", "設定を再読み込みしました"));
         } else {
-            return CliResult(false, "設定の再読み込みに失敗しました");
+            return CliResult(false, translate("config_reload_error", "設定の再読み込みに失敗しました"));
         }
     } catch (const std::exception& e) {
-        return CliResult(false, "設定の再読み込み中にエラーが発生しました: " + std::string(e.what()));
+        return CliResult(false, translate("config_reload_exception", "設定の再読み込み中にエラーが発生しました: ") + std::string(e.what()));
     }
 }
 
 CliResult CliManager::handleConfigValidate(const std::vector<std::string>& args) {
     try {
         config_manager_.validateAllConfigs();
-        return CliResult(true, "設定の検証が成功しました");
+        return CliResult(true, translate("config_validate_success", "設定の検証が成功しました"));
     } catch (const config::ConfigValidationError& e) {
-        return CliResult(false, "設定の検証に失敗しました: " + std::string(e.what()));
+        return CliResult(false, translate("config_validate_error", "設定の検証に失敗しました: ") + std::string(e.what()));
     } catch (const std::exception& e) {
-        return CliResult(false, "設定の検証中にエラーが発生しました: " + std::string(e.what()));
+        return CliResult(false, translate("config_validate_exception", "設定の検証中にエラーが発生しました: ") + std::string(e.what()));
     }
 }
 
 CliResult CliManager::handleConfigBackup(const std::vector<std::string>& args) {
-    return CliResult(false, "設定バックアップ機能は未実装です");
+    return CliResult(false, translate("not_implemented", "設定バックアップ機能は未実装です"));
 }
 
 CliResult CliManager::handleConfigRestore(const std::vector<std::string>& args) {
-    return CliResult(false, "設定復元機能は未実装です");
+    return CliResult(false, translate("not_implemented", "設定復元機能は未実装です"));
 }
 
 CliResult CliManager::handleDevice(const std::vector<std::string>& args) {
     if (args.size() < 2) {
-        return CliResult(false, "使用法: device <list|show|add|update|delete|test> [オプション]");
+        return CliResult(false, translate("device_usage", "使用法: device <list|show|add|update|delete|test> [オプション]"));
     }
     
     std::string subcommand = args[1];
@@ -290,7 +410,7 @@ CliResult CliManager::handleDevice(const std::vector<std::string>& args) {
     } else if (subcommand == "test") {
         return handleDeviceTest(args);
     } else {
-        return CliResult(false, "不明なサブコマンドです: " + subcommand);
+        return CliResult(false, translate("unknown_subcommand", "不明なサブコマンドです: ") + subcommand);
     }
 }
 
@@ -300,11 +420,17 @@ CliResult CliManager::handleDeviceList(const std::vector<std::string>& args) {
         const auto& devices = device_configs.getDevices();
         
         if (devices.empty()) {
-            return CliResult(true, "", "登録されているデバイスはありません。\n");
+            return CliResult(true, "", translate("no_devices", "登録されているデバイスはありません。") + "\n");
         }
         
         std::vector<std::vector<std::string>> table_data;
-        std::vector<std::string> headers = {"ID", "名前", "プロトコル", "テンプレート", "有効"};
+        std::vector<std::string> headers = {
+            translate("id", "ID"), 
+            translate("name", "名前"), 
+            translate("protocol", "プロトコル"), 
+            translate("template", "テンプレート"), 
+            translate("enabled", "有効")
+        };
         
         for (const auto& device : devices) {
             std::vector<std::string> row;
@@ -312,23 +438,23 @@ CliResult CliManager::handleDeviceList(const std::vector<std::string>& args) {
             row.push_back(device.getName());
             row.push_back(device.getProtocol());
             row.push_back(device.getTemplateName());
-            row.push_back(device.isEnabled() ? "はい" : "いいえ");
+            row.push_back(device.isEnabled() ? translate("yes", "はい") : translate("no", "いいえ"));
             table_data.push_back(row);
         }
         
-        std::string output = "デバイス一覧:\n";
+        std::string output = translate("device_list", "デバイス一覧") + ":\n";
         output += formatTable(table_data, headers);
-        output += "\n総数: " + std::to_string(devices.size()) + " デバイス\n";
+        output += "\n" + translate("total", "総数") + ": " + std::to_string(devices.size()) + " " + translate("devices", "デバイス") + "\n";
         
         return CliResult(true, "", output);
     } catch (const std::exception& e) {
-        return CliResult(false, "デバイス一覧の取得に失敗しました: " + std::string(e.what()));
+        return CliResult(false, translate("device_list_error", "デバイス一覧の取得に失敗しました: ") + std::string(e.what()));
     }
 }
 
 CliResult CliManager::handleDeviceShow(const std::vector<std::string>& args) {
     if (args.size() < 3) {
-        return CliResult(false, "使用法: device show <device_id>");
+        return CliResult(false, translate("device_show_usage", "使用法: device show <device_id>"));
     }
     
     std::string device_id = args[2];
@@ -336,7 +462,7 @@ CliResult CliManager::handleDeviceShow(const std::vector<std::string>& args) {
     try {
         auto device_opt = config_manager_.getDeviceConfig(device_id);
         if (!device_opt) {
-            return CliResult(false, "デバイスが見つかりません: " + device_id);
+            return CliResult(false, translate("device_not_found", "デバイスが見つかりません: ") + device_id);
         }
         
         const auto& device = device_opt.value();
@@ -344,50 +470,50 @@ CliResult CliManager::handleDeviceShow(const std::vector<std::string>& args) {
         
         return CliResult(true, "", output);
     } catch (const std::exception& e) {
-        return CliResult(false, "デバイス情報の取得に失敗しました: " + std::string(e.what()));
+        return CliResult(false, translate("device_info_error", "デバイス情報の取得に失敗しました: ") + std::string(e.what()));
     }
 }
 
 // 残りのメソッドは簡易実装
 CliResult CliManager::handleDeviceAdd(const std::vector<std::string>& args) {
-    return CliResult(false, "デバイス追加機能は未実装です");
+    return CliResult(false, translate("not_implemented", "デバイス追加機能は未実装です"));
 }
 
 CliResult CliManager::handleDeviceUpdate(const std::vector<std::string>& args) {
-    return CliResult(false, "デバイス更新機能は未実装です");
+    return CliResult(false, translate("not_implemented", "デバイス更新機能は未実装です"));
 }
 
 CliResult CliManager::handleDeviceDelete(const std::vector<std::string>& args) {
-    return CliResult(false, "デバイス削除機能は未実装です");
+    return CliResult(false, translate("not_implemented", "デバイス削除機能は未実装です"));
 }
 
 CliResult CliManager::handleDeviceTest(const std::vector<std::string>& args) {
-    return CliResult(false, "デバイステスト機能は未実装です");
+    return CliResult(false, translate("not_implemented", "デバイステスト機能は未実装です"));
 }
 
 CliResult CliManager::handleMapping(const std::vector<std::string>& args) {
-    return CliResult(false, "マッピング管理機能は未実装です");
+    return CliResult(false, translate("not_implemented", "マッピング管理機能は未実装です"));
 }
 
 CliResult CliManager::handleMappingList(const std::vector<std::string>& args) {
-    return CliResult(false, "マッピング一覧機能は未実装です");
+    return CliResult(false, translate("not_implemented", "マッピング一覧機能は未実装です"));
 }
 
 CliResult CliManager::handleMappingShow(const std::vector<std::string>& args) {
-    return CliResult(false, "マッピング表示機能は未実装です");
+    return CliResult(false, translate("not_implemented", "マッピング表示機能は未実装です"));
 }
 
 CliResult CliManager::handleMappingTest(const std::vector<std::string>& args) {
-    return CliResult(false, "マッピングテスト機能は未実装です");
+    return CliResult(false, translate("not_implemented", "マッピングテスト機能は未実装です"));
 }
 
 CliResult CliManager::handleMappingValidate(const std::vector<std::string>& args) {
-    return CliResult(false, "マッピング検証機能は未実装です");
+    return CliResult(false, translate("not_implemented", "マッピング検証機能は未実装です"));
 }
 
 CliResult CliManager::handleMetrics(const std::vector<std::string>& args) {
     if (args.size() < 2) {
-        return CliResult(false, "使用法: metrics <show|reset|export>");
+        return CliResult(false, translate("metrics_usage", "使用法: metrics <show|reset|export>"));
     }
     
     std::string subcommand = args[1];
@@ -399,7 +525,7 @@ CliResult CliManager::handleMetrics(const std::vector<std::string>& args) {
     } else if (subcommand == "export") {
         return handleMetricsExport(args);
     } else {
-        return CliResult(false, "不明なサブコマンドです: " + subcommand);
+        return CliResult(false, translate("unknown_subcommand", "不明なサブコマンドです: ") + subcommand);
     }
 }
 
@@ -428,26 +554,26 @@ CliResult CliManager::handleMetricsShow(const std::vector<std::string>& args) {
             auto all_metrics = metrics_collector.getAllMetrics();
             
             std::ostringstream output;
-            output << "メトリクス一覧:\n";
+            output << translate("metrics_list", "メトリクス一覧") << ":\n";
             output << "==============\n\n";
             
             for (const auto& metric_pair : all_metrics) {
                 const auto& metric = metric_pair.second;
                 std::lock_guard<std::mutex> lock(metric->mutex);
                 
-                output << "名前: " << metric->name << "\n";
-                output << "説明: " << metric->description << "\n";
-                output << "タイプ: ";
+                output << translate("name", "名前") << ": " << metric->name << "\n";
+                output << translate("description", "説明") << ": " << metric->description << "\n";
+                output << translate("type", "タイプ") << ": ";
                 
                 switch (metric->type) {
-                    case common::MetricType::COUNTER: output << "カウンター"; break;
-                    case common::MetricType::GAUGE: output << "ゲージ"; break;
-                    case common::MetricType::HISTOGRAM: output << "ヒストグラム"; break;
-                    case common::MetricType::SUMMARY: output << "サマリー"; break;
+                    case common::MetricType::COUNTER: output << translate("counter", "カウンター"); break;
+                    case common::MetricType::GAUGE: output << translate("gauge", "ゲージ"); break;
+                    case common::MetricType::HISTOGRAM: output << translate("histogram", "ヒストグラム"); break;
+                    case common::MetricType::SUMMARY: output << translate("summary", "サマリー"); break;
                 }
                 output << "\n";
                 
-                output << "値:\n";
+                output << translate("value", "値") << ":\n";
                 for (const auto& value_pair : metric->values) {
                     output << "  ";
                     if (!value_pair.second.labels.empty()) {
@@ -474,7 +600,7 @@ CliResult CliManager::handleMetricsShow(const std::vector<std::string>& args) {
             return CliResult(true, "", output.str());
         }
     } catch (const std::exception& e) {
-        return CliResult(false, "メトリクス表示中にエラーが発生しました: " + std::string(e.what()));
+        return CliResult(false, translate("metrics_show_error", "メトリクス表示中にエラーが発生しました: ") + std::string(e.what()));
     }
 }
 
@@ -486,18 +612,18 @@ CliResult CliManager::handleMetricsReset(const std::vector<std::string>& args) {
             // 特定のメトリクスをリセット
             std::string metric_name = args[2];
             metrics_collector.resetMetrics(metric_name);
-            return CliResult(true, "メトリクス '" + metric_name + "' をリセットしました");
+            return CliResult(true, translate("metrics_reset_success", "メトリクス '") + metric_name + translate("metrics_reset_success_suffix", "' をリセットしました"));
         } else {
             // 全メトリクスをリセット
             if (args.size() > 2 && args[2] == "--all") {
                 metrics_collector.resetMetrics();
-                return CliResult(true, "すべてのメトリクスをリセットしました");
+                return CliResult(true, translate("metrics_reset_all_success", "すべてのメトリクスをリセットしました"));
             } else {
-                return CliResult(false, "使用法: metrics reset [メトリクス名] または metrics reset --all");
+                return CliResult(false, translate("metrics_reset_usage", "使用法: metrics reset [メトリクス名] または metrics reset --all"));
             }
         }
     } catch (const std::exception& e) {
-        return CliResult(false, "メトリクスリセット中にエラーが発生しました: " + std::string(e.what()));
+        return CliResult(false, translate("metrics_reset_error", "メトリクスリセット中にエラーが発生しました: ") + std::string(e.what()));
     }
 }
 
@@ -537,44 +663,44 @@ CliResult CliManager::handleMetricsExport(const std::vector<std::string>& args) 
             // ファイルに出力
             std::ofstream file(output_file);
             if (!file.is_open()) {
-                return CliResult(false, "ファイルを開けませんでした: " + output_file);
+                return CliResult(false, translate("file_open_error", "ファイルを開けませんでした: ") + output_file);
             }
             
             file << data;
             file.close();
             
-            return CliResult(true, "メトリクスを " + output_file + " にエクスポートしました");
+            return CliResult(true, translate("metrics_export_success", "メトリクスを ") + output_file + translate("metrics_export_success_suffix", " にエクスポートしました"));
         }
     } catch (const std::exception& e) {
-        return CliResult(false, "メトリクスエクスポート中にエラーが発生しました: " + std::string(e.what()));
+        return CliResult(false, translate("metrics_export_error", "メトリクスエクスポート中にエラーが発生しました: ") + std::string(e.what()));
     }
 }
 
 CliResult CliManager::handleHealth(const std::vector<std::string>& args) {
     std::ostringstream oss;
-    oss << "ヘルスチェック結果:\n";
+    oss << translate("health_check_result", "ヘルスチェック結果") << ":\n";
     oss << "==================\n";
-    oss << "状態: 正常\n";
-    oss << "タイムスタンプ: " << std::time(nullptr) << "\n";
-    oss << "稼働時間: " << std::time(nullptr) << " 秒\n";
+    oss << translate("status", "状態") << ": " << translate("normal", "正常") << "\n";
+    oss << translate("timestamp", "タイムスタンプ") << ": " << std::time(nullptr) << "\n";
+    oss << translate("uptime", "稼働時間") << ": " << std::time(nullptr) << " " << translate("seconds", "秒") << "\n";
     
     return CliResult(true, "", oss.str());
 }
 
 CliResult CliManager::handleLog(const std::vector<std::string>& args) {
-    return CliResult(false, "ログ管理機能は未実装です");
+    return CliResult(false, translate("not_implemented", "ログ管理機能は未実装です"));
 }
 
 CliResult CliManager::handleLogShow(const std::vector<std::string>& args) {
-    return CliResult(false, "ログ表示機能は未実装です");
+    return CliResult(false, translate("not_implemented", "ログ表示機能は未実装です"));
 }
 
 CliResult CliManager::handleLogLevel(const std::vector<std::string>& args) {
-    return CliResult(false, "ログレベル設定機能は未実装です");
+    return CliResult(false, translate("not_implemented", "ログレベル設定機能は未実装です"));
 }
 
 CliResult CliManager::handleLogRotate(const std::vector<std::string>& args) {
-    return CliResult(false, "ログローテーション機能は未実装です");
+    return CliResult(false, translate("not_implemented", "ログローテーション機能は未実装です"));
 }
 
 // ユーティリティ関数の実装
@@ -635,16 +761,16 @@ std::string CliManager::formatTable(const std::vector<std::vector<std::string>>&
 
 std::string CliManager::formatDeviceInfo(const config::DeviceConfig& device) {
     std::ostringstream oss;
-    oss << "デバイス情報:\n";
+    oss << translate("device_info", "デバイス情報") << ":\n";
     oss << "=============\n";
-    oss << "ID: " << device.getId() << "\n";
-    oss << "名前: " << device.getName() << "\n";
-    oss << "説明: " << device.getDescription() << "\n";
-    oss << "プロトコル: " << device.getProtocol() << "\n";
-    oss << "テンプレート: " << device.getTemplateName() << "\n";
-    oss << "有効: " << (device.isEnabled() ? "はい" : "いいえ") << "\n";
+    oss << translate("id", "ID") << ": " << device.getId() << "\n";
+    oss << translate("name", "名前") << ": " << device.getName() << "\n";
+    oss << translate("description", "説明") << ": " << device.getDescription() << "\n";
+    oss << translate("protocol", "プロトコル") << ": " << device.getProtocol() << "\n";
+    oss << translate("template", "テンプレート") << ": " << device.getTemplateName() << "\n";
+    oss << translate("enabled", "有効") << ": " << (device.isEnabled() ? translate("yes", "はい") : translate("no", "いいえ")) << "\n";
     
-    oss << "\n接続設定:\n";
+    oss << "\n" << translate("connection_settings", "接続設定") << ":\n";
     const auto& params = device.getConnectionParameters();
     for (const auto& param : params) {
         oss << "  " << param.first << ": " << param.second << "\n";
@@ -655,7 +781,7 @@ std::string CliManager::formatDeviceInfo(const config::DeviceConfig& device) {
 
 std::string CliManager::formatMetrics(const std::map<std::string, double>& metrics) {
     std::ostringstream oss;
-    oss << "メトリクス:\n";
+    oss << translate("metrics", "メトリクス") << ":\n";
     oss << "==========\n";
     
     for (const auto& metric : metrics) {
@@ -666,4 +792,4 @@ std::string CliManager::formatMetrics(const std::map<std::string, double>& metri
 }
 
 } // namespace api
-} // namespace ocpp_gateway 
+} // namespace ocpp_gateway

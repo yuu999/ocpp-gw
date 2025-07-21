@@ -117,6 +117,11 @@ private:
                            const std::vector<std::string>& headers);
     std::string formatDeviceInfo(const config::DeviceConfig& device);
     std::string formatMetrics(const std::map<std::string, double>& metrics);
+    
+    // 国際化サポート
+    std::string translate(const std::string& key, const std::string& default_value = "") const;
+    bool setLanguage(const std::string& language);
+    std::string getCurrentLanguage() const;
 
     struct CommandInfo {
         std::string description;
