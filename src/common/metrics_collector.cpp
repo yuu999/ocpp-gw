@@ -434,14 +434,14 @@ void MetricsCollector::updateLinuxSystemMetrics() {
     if (meminfo.is_open()) {
         std::string line;
         while (std::getline(meminfo, line)) {
-            if (line.starts_with("MemTotal:")) {
+            if (line.find("MemTotal:") == 0) {
                 std::istringstream iss(line);
                 std::string key, unit;
                 uint64_t value;
                 iss >> key >> value >> unit;
                 total_memory_bytes_ = value * 1024; // kBからBytesに変換
                 setGauge("system_memory_total_bytes", static_cast<double>(total_memory_bytes_.load()));
-            } else if (line.starts_with("MemAvailable:")) {
+            } else if (line.find("MemAvailable:") == 0) {
                 std::istringstream iss(line);
                 std::string key, unit;
                 uint64_t available;
