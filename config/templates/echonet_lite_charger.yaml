@@ -11,7 +11,7 @@ template:
   device:
     protocol: "echonet_lite"
     class_group: 0x02  # 住宅・設備関連機器クラスグループ
-    class: 0x7D        # EV充電器クラス
+    class: 0xA1        # 電気自動車充電器クラス
     instance: 0x01     # インスタンス番号
   
   # OCPP変数とECHONET Lite EPCのマッピング
@@ -82,17 +82,17 @@ template:
     - ocpp_name: "StartTransaction"
       description: "充電開始コマンド"
       type: "echonet_lite"
-      epc: 0x80        # 運転設定
+      epc: 0xDA        # 運転モード設定
       data_type: "uint8"
       enum:
-        0x30: "Start"   # 開始
-        0x31: "Stop"    # 停止
-    
+        0x42: "Charging"   # 充電
+        0x47: "Stop"       # 停止
+
     # 充電停止
     - ocpp_name: "StopTransaction"
       description: "充電停止コマンド"
       type: "echonet_lite"
-      epc: 0x80        # 運転設定
+      epc: 0xDA        # 運転モード設定
       data_type: "uint8"
       enum:
-        0x31: "Stop"    # 停止 
+        0x47: "Stop"       # 停止 

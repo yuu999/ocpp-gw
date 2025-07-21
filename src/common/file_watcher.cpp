@@ -27,6 +27,8 @@ bool FileWatcher::addWatch(const std::string& file_path, FileChangeCallback call
         info.last_write_time = fs::last_write_time(file_path);
         info.callback = callback;
         info.is_directory = false;
+        info.file_extension = "";
+        info.recursive = false;
         watches_[file_path] = info;
         
         LOG_DEBUG("Added watch for file: {}", file_path);

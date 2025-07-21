@@ -254,17 +254,15 @@ private:
                           uint16_t tid, int max_retries = 3);
 };
 
-// ECHONET Lite EV charger/discharger classes (corrected)
-constexpr uint8_t EOJ_EV_CHARGER_CLASS_GROUP = 0x02;  // 住宅・設備関連機器クラスグループ
-constexpr uint8_t EOJ_EV_CHARGER_CLASS = 0x7D;        // EV充電器クラス
-constexpr uint8_t EOJ_EV_DISCHARGER_CLASS = 0x7E;     // EV充放電器クラス
-constexpr uint8_t EOJ_STORAGE_BATTERY_CLASS = 0x87;   // 蓄電池クラス
-constexpr uint8_t EOJ_PV_POWER_GENERATION_CLASS = 0x88; // 太陽光発電クラス
-
 // ECHONET Lite EV charger classes (OCPP focused)
 constexpr uint8_t EOJ_EV_CHARGER_CLASS_GROUP = 0x02;  // 住宅・設備関連機器クラスグループ
 constexpr uint8_t EOJ_EV_CHARGER_CLASS = 0x7D;        // EV充電器クラス
 constexpr uint8_t EOJ_EV_DISCHARGER_CLASS = 0x7E;     // EV充放電器クラス（V2G対応）
+
+// ECHONET Lite EV charger classes (corrected based on ECHONET specification)
+constexpr uint8_t EOJ_EV_CHARGER_CLASS_GROUP = 0x02;  // 住宅・設備関連機器クラスグループ
+constexpr uint8_t EOJ_EV_CHARGER_CLASS = 0xA1;        // 電気自動車充電器クラス
+constexpr uint8_t EOJ_EV_DISCHARGER_CLASS = 0xA1;     // 電気自動車充電器クラス（充放電対応）
 
 } // namespace device
 } // namespace ocpp_gateway

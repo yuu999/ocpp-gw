@@ -76,6 +76,7 @@ bool RbacManager::saveUsers(const std::string& config_file) const {
 AuthResult RbacManager::authenticate(const std::string& username, const std::string& password) const {
     AuthResult result;
     result.success = false;
+    result.role = UserRole::GUEST; // Initialize with default role
     
     auto it = users_.find(username);
     if (it == users_.end()) {
@@ -112,6 +113,7 @@ AuthResult RbacManager::authenticate(const std::string& username, const std::str
 AuthResult RbacManager::authenticateToken(const std::string& token) const {
     AuthResult result;
     result.success = false;
+    result.role = UserRole::GUEST; // Initialize with default role
     
     auto it = tokens_.find(token);
     if (it == tokens_.end()) {
@@ -266,8 +268,9 @@ bool RbacManager::revokeToken(const std::string& token) {
         return false;
     }
     
+    std::string username = it->second; // Store username before erasing
     tokens_.erase(it);
-    LOG_INFO("Revoked token for user: {}", it->second);
+    LOG_INFO("Revoked token for user: {}", username);
     return true;
 }
 

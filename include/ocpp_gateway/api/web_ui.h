@@ -27,7 +27,7 @@ public:
      * @param bind_address バインドアドレス
      * @param document_root 静的ファイルのルートディレクトリ
      */
-    WebUI(int port = 8081, const std::string& bind_address = "0.0.0.0", 
+    explicit WebUI(int port = 8081, const std::string& bind_address = "0.0.0.0", 
           const std::string& document_root = "web");
 
     /**

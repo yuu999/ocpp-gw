@@ -14,7 +14,7 @@ template:
   device:
     protocol: "echonet_lite"
     class_group: 0x02  # 住宅・設備関連機器クラスグループ
-    class: 0x7E        # EV充放電器クラス
+    class: 0xA1        # 電気自動車充電器クラス
     instance: 0x01     # インスタンス番号
   
   # OCPP変数とECHONET Lite EPCのマッピング
@@ -115,7 +115,7 @@ template:
       scale: 0.1        # スケール（A）
       unit: "A"
     
-    # 運転モード
+    # 運転モード（V2G対応）
     - ocpp_name: "OperationMode"
       description: "運転モード"
       type: "echonet_lite"
@@ -126,6 +126,20 @@ template:
         0x42: "V2GDischarging"  # V2G放電モード
         0x43: "Standby"      # 待機モード
         0x44: "Fault"        # 故障モード
+
+    # 運転モード（充放電対応）
+    - ocpp_name: "OperationMode"
+      description: "運転モード"
+      type: "echonet_lite"
+      epc: 0xDA        # 運転モード設定
+      data_type: "uint8"
+      enum:
+        0x42: "Charging"     # 充電
+        0x43: "Discharging"  # 放電
+        0x44: "ChargingDischarging"  # 充放電
+        0x45: "Auto"         # 自動
+        0x47: "Stop"         # 停止
+        0x48: "Standby"      # 待機
   
   # コマンドマッピング
   commands:
@@ -138,6 +152,16 @@ template:
       enum:
         0x30: "Start"   # 開始
         0x31: "Stop"    # 停止
+
+    # 充電開始
+    - ocpp_name: "StartTransaction"
+      description: "充電開始コマンド"
+      type: "echonet_lite"
+      epc: 0xDA        # 運転モード設定
+      data_type: "uint8"
+      enum:
+        0x42: "Charging"   # 充電
+        0x47: "Stop"       # 停止
     
     # 充電停止
     - ocpp_name: "StopTransaction"
@@ -147,6 +171,15 @@ template:
       data_type: "uint8"
       enum:
         0x31: "Stop"    # 停止
+
+    # 充電停止
+    - ocpp_name: "StopTransaction"
+      description: "充電停止コマンド"
+      type: "echonet_lite"
+      epc: 0xDA        # 運転モード設定
+      data_type: "uint8"
+      enum:
+        0x47: "Stop"    # 停止
     
     # 放電開始
     - ocpp_name: "StartDischarging"
@@ -158,15 +191,15 @@ template:
         0x32: "Discharge"  # 放電開始
         0x31: "Stop"       # 停止
 
-    # V2G放電開始
-    - ocpp_name: "StartV2GDischarging"
-      description: "V2G放電開始コマンド"
+    # 放電開始
+    - ocpp_name: "StartDischarging"
+      description: "放電開始コマンド"
       type: "echonet_lite"
-      epc: 0x80        # 運転設定
+      epc: 0xDA        # 運転モード設定
       data_type: "uint8"
       enum:
-        0x32: "V2GDischarge"  # V2G放電開始
-        0x31: "Stop"          # 停止
+        0x43: "Discharging"  # 放電
+        0x47: "Stop"         # 停止
     
     # 放電停止
     - ocpp_name: "StopDischarging"
@@ -177,11 +210,11 @@ template:
       enum:
         0x31: "Stop"    # 停止
 
-    # V2G放電停止
-    - ocpp_name: "StopV2GDischarging"
-      description: "V2G放電停止コマンド"
+    # 放電停止
+    - ocpp_name: "StopDischarging"
+      description: "放電停止コマンド"
       type: "echonet_lite"
-      epc: 0x80        # 運転設定
+      epc: 0xDA        # 運転モード設定
       data_type: "uint8"
       enum:
-        0x31: "Stop"    # 停止 
+        0x47: "Stop"    # 停止 

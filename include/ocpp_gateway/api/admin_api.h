@@ -66,7 +66,7 @@ public:
      * @param port サーバーのポート番号
      * @param bind_address バインドアドレス
      */
-    AdminApi(int port = 8080, const std::string& bind_address = "127.0.0.1");
+    explicit AdminApi(int port = 8080, const std::string& bind_address = "127.0.0.1");
 
     /**
      * @brief デストラクタ

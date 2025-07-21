@@ -35,10 +35,10 @@ constexpr uint8_t EOJ_NODE_PROFILE_INSTANCE = 0x01;
 constexpr uint8_t EPC_INSTANCE_LIST_NOTIFICATION = 0xD5;
 constexpr uint8_t EPC_SELF_NODE_INSTANCE_LIST_S = 0xD6;
 
-// ECHONET Lite EV charger/discharger classes (OCPP focused)
+// ECHONET Lite EV charger classes (corrected based on ECHONET specification)
 constexpr uint8_t EOJ_EV_CHARGER_CLASS_GROUP = 0x02;  // 住宅・設備関連機器クラスグループ
-constexpr uint8_t EOJ_EV_CHARGER_CLASS = 0x7D;        // EV充電器クラス
-constexpr uint8_t EOJ_EV_DISCHARGER_CLASS = 0x7E;     // EV充放電器クラス（V2G対応）
+constexpr uint8_t EOJ_EV_CHARGER_CLASS = 0xA1;        // 電気自動車充電器クラス
+constexpr uint8_t EOJ_EV_DISCHARGER_CLASS = 0xA1;     // 電気自動車充電器クラス（充放電対応）
 constexpr uint8_t EOJ_STORAGE_BATTERY_CLASS = 0x87;   // 蓄電池クラス
 constexpr uint8_t EOJ_PV_POWER_GENERATION_CLASS = 0x88; // 太陽光発電クラス
 
@@ -48,6 +48,9 @@ constexpr uint8_t EPC_INSTALLATION_LOCATION = 0x81;
 constexpr uint8_t EPC_STANDARD_VERSION = 0x82;
 constexpr uint8_t EPC_FAULT_STATUS = 0x88;
 constexpr uint8_t EPC_MANUFACTURER_CODE = 0x8A;
+
+// ECHONET Lite EV charger specific properties
+constexpr uint8_t EPC_OPERATION_MODE_SETTING = 0xDA;  // 運転モード設定
 
 // Socket timeout in milliseconds
 constexpr int SOCKET_TIMEOUT_MS = 1000;
