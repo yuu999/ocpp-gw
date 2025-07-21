@@ -2,6 +2,7 @@
 #include "ocpp_gateway/common/logger.h"
 #include "ocpp_gateway/common/config_manager.h"
 #include "ocpp_gateway/common/metrics_collector.h"
+#include "ocpp_gateway/common/language_manager.h"
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/filesystem.hpp>
@@ -36,6 +37,9 @@ WebUI::WebUI(int port, const std::string& bind_address, const std::string& docum
     mime_types_[".woff"] = "font/woff";
     mime_types_[".woff2"] = "font/woff2";
     mime_types_[".ttf"] = "font/ttf";
+    
+    // Initialize language manager
+    common::LanguageManager::getInstance().initialize("en", "resources/lang");
 }
 
 WebUI::~WebUI() {
@@ -44,7 +48,7 @@ WebUI::~WebUI() {
 
 bool WebUI::start() {
     if (running_.load()) {
-        LOG_WARN("WebUIサーバーは既に実行中です");
+        LOG_WARN(translate("webui_already_running", "WebUIサーバーは既に実行中です"));
         return true;
     }
 
@@ -55,10 +59,10 @@ bool WebUI::start() {
         // サーバー開始まで少し待機
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         
-        LOG_INFO("WebUIサーバーを開始しました: {}:{}", bind_address_, port_);
+        LOG_INFO(translate("webui_started", "WebUIサーバーを開始しました: {}:{}"), bind_address_, port_);
         return true;
     } catch (const std::exception& e) {
-        LOG_ERROR("WebUIサーバーの開始に失敗しました: {}", e.what());
+        LOG_ERROR(translate("webui_start_failed", "WebUIサーバーの開始に失敗しました: {}"), e.what());
         running_ = false;
         return false;
     }
@@ -75,7 +79,7 @@ void WebUI::stop() {
         server_thread_.join();
     }
     
-    LOG_INFO("WebUIサーバーを停止しました");
+    LOG_INFO(translate("webui_stopped", "WebUIサーバーを停止しました"));
 }
 
 bool WebUI::isRunning() const {
@@ -92,10 +96,26 @@ void WebUI::setAuthentication(bool enabled, const std::string& username, const s
     auth_password_ = password;
     
     if (enabled) {
-        LOG_INFO("WebUI認証を有効にしました（ユーザー: {}）", username);
+        LOG_INFO(translate("webui_auth_enabled", "WebUI認証を有効にしました（ユーザー: {}）"), username);
     } else {
-        LOG_INFO("WebUI認証を無効にしました");
+        LOG_INFO(translate("webui_auth_disabled", "WebUI認証を無効にしました"));
     }
+}
+
+bool WebUI::setLanguage(const std::string& language) {
+    return common::LanguageManager::getInstance().setLanguage(language);
+}
+
+std::string WebUI::getCurrentLanguage() const {
+    return common::LanguageManager::getInstance().getCurrentLanguage();
+}
+
+std::vector<std::string> WebUI::getAvailableLanguages() const {
+    return common::LanguageManager::getInstance().getAvailableLanguages();
+}
+
+std::string WebUI::translate(const std::string& key, const std::string& default_value) const {
+    return common::LanguageManager::getInstance().translate(key, default_value);
 }
 
 void WebUI::runServer() {
@@ -114,7 +134,7 @@ void WebUI::runServer() {
                 acceptor.accept(stream.socket());
             } catch (const std::exception& e) {
                 if (running_.load()) {
-                    LOG_ERROR("WebUI接続受け入れエラー: {}", e.what());
+                    LOG_ERROR(translate("webui_accept_error", "WebUI接続受け入れエラー: {}"), e.what());
                 }
                 continue;
             }
@@ -126,7 +146,7 @@ void WebUI::runServer() {
             try {
                 http::read(stream, buffer, req);
             } catch (const std::exception& e) {
-                LOG_ERROR("WebUIリクエスト読み取りエラー: {}", e.what());
+                LOG_ERROR(translate("webui_request_error", "WebUIリクエスト読み取りエラー: {}"), e.what());
                 continue;
             }
 
@@ -135,10 +155,42 @@ void WebUI::runServer() {
             for (auto const& field : req) {
                 headers[std::string(field.name_string())] = std::string(field.value());
             }
+            
+            // クエリパラメータを抽出
+            std::map<std::string, std::string> query_params;
+            std::string target = std::string(req.target());
+            size_t query_pos = target.find('?');
+            if (query_pos != std::string::npos) {
+                std::string query_string = target.substr(query_pos + 1);
+                target = target.substr(0, query_pos);
+                
+                size_t start = 0;
+                size_t end = 0;
+                while ((end = query_string.find('&', start)) != std::string::npos) {
+                    std::string param = query_string.substr(start, end - start);
+                    size_t eq_pos = param.find('=');
+                    if (eq_pos != std::string::npos) {
+                        query_params[param.substr(0, eq_pos)] = param.substr(eq_pos + 1);
+                    }
+                    start = end + 1;
+                }
+                
+                std::string param = query_string.substr(start);
+                size_t eq_pos = param.find('=');
+                if (eq_pos != std::string::npos) {
+                    query_params[param.substr(0, eq_pos)] = param.substr(eq_pos + 1);
+                }
+            }
+
+            // 言語切り替えの処理
+            auto lang_it = query_params.find("lang");
+            if (lang_it != query_params.end()) {
+                setLanguage(lang_it->second);
+            }
 
             // リクエストを処理
             std::string response_body = handleRequest(
-                std::string(req.target()),
+                target,
                 std::string(req.method_string()),
                 req.body(),
                 headers
@@ -156,7 +208,7 @@ void WebUI::runServer() {
             try {
                 http::write(stream, res);
             } catch (const std::exception& e) {
-                LOG_ERROR("WebUIレスポンス送信エラー: {}", e.what());
+                LOG_ERROR(translate("webui_response_error", "WebUIレスポンス送信エラー: {}"), e.what());
             }
 
             // 接続を閉じる
@@ -164,7 +216,7 @@ void WebUI::runServer() {
             stream.socket().shutdown(beast::tcp_socket::shutdown_send, ec);
         }
     } catch (const std::exception& e) {
-        LOG_ERROR("WebUIサーバーエラー: {}", e.what());
+        LOG_ERROR(translate("webui_server_error", "WebUIサーバーエラー: {}"), e.what());
     }
 }
 
@@ -174,7 +226,7 @@ std::string WebUI::handleRequest(const std::string& target, const std::string& m
     try {
         // 認証チェック
         if (auth_enabled_ && !authenticate(headers)) {
-            return createErrorResponse(401, "認証が必要です");
+            return createErrorResponse(401, translate("authentication_required", "認証が必要です"));
         }
 
         // ルートパスの場合はダッシュボードを表示
@@ -191,6 +243,8 @@ std::string WebUI::handleRequest(const std::string& target, const std::string& m
             return generateConfigPage();
         } else if (target == "/logs" || target == "/logs.html") {
             return generateLogPage();
+        } else if (target == "/language" || target == "/language.html") {
+            return generateLanguagePage();
         }
         
         // 静的ファイルの配信
@@ -200,10 +254,10 @@ std::string WebUI::handleRequest(const std::string& target, const std::string& m
         }
         
         // 404エラー
-        return createErrorResponse(404, "ページが見つかりません");
+        return createErrorResponse(404, translate("page_not_found", "ページが見つかりません"));
     } catch (const std::exception& e) {
-        LOG_ERROR("WebUIリクエスト処理エラー: {}", e.what());
-        return createErrorResponse(500, "内部サーバーエラー");
+        LOG_ERROR(translate("webui_request_processing_error", "WebUIリクエスト処理エラー: {}"), e.what());
+        return createErrorResponse(500, translate("internal_server_error", "内部サーバーエラー"));
     }
 }
 
@@ -211,7 +265,7 @@ std::string WebUI::serveStaticFile(const std::string& file_path) {
     try {
         std::ifstream file(file_path, std::ios::binary);
         if (!file.is_open()) {
-            return createErrorResponse(404, "ファイルが見つかりません");
+            return createErrorResponse(404, translate("file_not_found", "ファイルが見つかりません"));
         }
         
         std::ostringstream content;
@@ -220,8 +274,8 @@ std::string WebUI::serveStaticFile(const std::string& file_path) {
         std::string mime_type = getMimeType(file_path);
         return createResponse(content.str(), mime_type);
     } catch (const std::exception& e) {
-        LOG_ERROR("静的ファイル配信エラー [{}]: {}", file_path, e.what());
-        return createErrorResponse(500, "ファイル読み取りエラー");
+        LOG_ERROR(translate("static_file_error", "静的ファイル配信エラー [{}]: {}"), file_path, e.what());
+        return createErrorResponse(500, translate("file_read_error", "ファイル読み取りエラー"));
     }
 }
 
@@ -261,17 +315,17 @@ std::string WebUI::createErrorResponse(int status_code, const std::string& messa
     html << "<html>\n";
     html << "<head>\n";
     html << "  <meta charset=\"UTF-8\">\n";
-    html << "  <title>エラー " << status_code << " - OCPP Gateway</title>\n";
+    html << "  <title>" << translate("error", "エラー") << " " << status_code << " - OCPP Gateway</title>\n";
     html << "  <style>\n";
     html << "    body { font-family: Arial, sans-serif; margin: 40px; }\n";
     html << "    .error { color: #d32f2f; }\n";
     html << "  </style>\n";
     html << "</head>\n";
     html << "<body>\n";
-    html << "  <h1 class=\"error\">エラー " << status_code << "</h1>\n";
+    html << "  <h1 class=\"error\">" << translate("error", "エラー") << " " << status_code << "</h1>\n";
     html << "  <p>" << message << "</p>\n";
     html << "  <hr>\n";
-    html << "  <p><a href=\"/\">ダッシュボードに戻る</a></p>\n";
+    html << "  <p><a href=\"/\">" << translate("back_to_dashboard", "ダッシュボードに戻る") << "</a></p>\n";
     html << "</body>\n";
     html << "</html>\n";
     
@@ -298,7 +352,7 @@ std::string WebUI::generateDashboard() {
         html << "<head>\n";
         html << "  <meta charset=\"UTF-8\">\n";
         html << "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-        html << "  <title>OCPP Gateway - ダッシュボード</title>\n";
+        html << "  <title>OCPP Gateway - " << translate("dashboard", "ダッシュボード") << "</title>\n";
         html << "  <style>\n";
         html << generateCSS();
         html << "  </style>\n";
@@ -306,22 +360,22 @@ std::string WebUI::generateDashboard() {
         html << "<body>\n";
         html << generateNavigation();
         html << "  <div class=\"container\">\n";
-        html << "    <h1>OCPP 2.0.1 ゲートウェイ・ミドルウェア</h1>\n";
+        html << "    <h1>OCPP 2.0.1 " << translate("gateway_middleware", "ゲートウェイ・ミドルウェア") << "</h1>\n";
         
         // システム状態カード
         html << "    <div class=\"card\">\n";
-        html << "      <h2>システム状態</h2>\n";
+        html << "      <h2>" << translate("system_status", "システム状態") << "</h2>\n";
         html << "      <div class=\"status-grid\">\n";
         html << "        <div class=\"status-item\">\n";
-        html << "          <span class=\"status-label\">状態:</span>\n";
-        html << "          <span class=\"status-value status-active\">稼働中</span>\n";
+        html << "          <span class=\"status-label\">" << translate("status", "状態") << ":</span>\n";
+        html << "          <span class=\"status-value status-active\">" << translate("running", "稼働中") << "</span>\n";
         html << "        </div>\n";
         html << "        <div class=\"status-item\">\n";
-        html << "          <span class=\"status-label\">稼働時間:</span>\n";
-        html << "          <span class=\"status-value\">不明</span>\n";
+        html << "          <span class=\"status-label\">" << translate("uptime", "稼働時間") << ":</span>\n";
+        html << "          <span class=\"status-value\">" << translate("unknown", "不明") << "</span>\n";
         html << "        </div>\n";
         html << "        <div class=\"status-item\">\n";
-        html << "          <span class=\"status-label\">バージョン:</span>\n";
+        html << "          <span class=\"status-label\">" << translate("version", "バージョン") << ":</span>\n";
         html << "          <span class=\"status-value\">1.0.0</span>\n";
         html << "        </div>\n";
         html << "      </div>\n";
@@ -330,18 +384,18 @@ std::string WebUI::generateDashboard() {
         // デバイス状態カード
         const auto& device_configs = config_manager.getDeviceConfigs();
         html << "    <div class=\"card\">\n";
-        html << "      <h2>デバイス状態</h2>\n";
+        html << "      <h2>" << translate("device_status", "デバイス状態") << "</h2>\n";
         html << "      <div class=\"status-grid\">\n";
         html << "        <div class=\"status-item\">\n";
-        html << "          <span class=\"status-label\">総デバイス数:</span>\n";
+        html << "          <span class=\"status-label\">" << translate("total_devices", "総デバイス数") << ":</span>\n";
         html << "          <span class=\"status-value\">" << device_configs.getDevices().size() << "</span>\n";
         html << "        </div>\n";
         html << "        <div class=\"status-item\">\n";
-        html << "          <span class=\"status-label\">アクティブ:</span>\n";
+        html << "          <span class=\"status-label\">" << translate("active", "アクティブ") << ":</span>\n";
         html << "          <span class=\"status-value status-active\">0</span>\n";
         html << "        </div>\n";
         html << "        <div class=\"status-item\">\n";
-        html << "          <span class=\"status-label\">エラー:</span>\n";
+        html << "          <span class=\"status-label\">" << translate("error", "エラー") << ":</span>\n";
         html << "          <span class=\"status-value status-error\">0</span>\n";
         html << "        </div>\n";
         html << "      </div>\n";
@@ -349,19 +403,19 @@ std::string WebUI::generateDashboard() {
         
         // 最近のイベント
         html << "    <div class=\"card\">\n";
-        html << "      <h2>最近のイベント</h2>\n";
+        html << "      <h2>" << translate("recent_events", "最近のイベント") << "</h2>\n";
         html << "      <div class=\"event-list\">\n";
         html << "        <div class=\"event-item\">\n";
         html << "          <span class=\"event-time\">2024-12-20 17:00:00</span>\n";
-        html << "          <span class=\"event-message\">システム開始</span>\n";
+        html << "          <span class=\"event-message\">" << translate("system_started", "システム開始") << "</span>\n";
         html << "        </div>\n";
         html << "        <div class=\"event-item\">\n";
         html << "          <span class=\"event-time\">2024-12-20 17:00:01</span>\n";
-        html << "          <span class=\"event-message\">設定読み込み完了</span>\n";
+        html << "          <span class=\"event-message\">" << translate("config_loaded", "設定読み込み完了") << "</span>\n";
         html << "        </div>\n";
         html << "        <div class=\"event-item\">\n";
         html << "          <span class=\"event-time\">2024-12-20 17:00:02</span>\n";
-        html << "          <span class=\"event-message\">管理APIサーバー開始</span>\n";
+        html << "          <span class=\"event-message\">" << translate("admin_api_started", "管理APIサーバー開始") << "</span>\n";
         html << "        </div>\n";
         html << "      </div>\n";
         html << "    </div>\n";
@@ -373,8 +427,8 @@ std::string WebUI::generateDashboard() {
         
         return html.str();
     } catch (const std::exception& e) {
-        LOG_ERROR("ダッシュボード生成エラー: {}", e.what());
-        return createErrorResponse(500, "ダッシュボードの生成に失敗しました");
+        LOG_ERROR(translate("dashboard_generation_error", "ダッシュボード生成エラー: {}"), e.what());
+        return createErrorResponse(500, translate("dashboard_generation_failed", "ダッシュボードの生成に失敗しました"));
     }
 }
 
@@ -389,7 +443,7 @@ std::string WebUI::generateDevicePage() {
         html << "<head>\n";
         html << "  <meta charset=\"UTF-8\">\n";
         html << "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-        html << "  <title>OCPP Gateway - デバイス管理</title>\n";
+        html << "  <title>OCPP Gateway - " << translate("device_management", "デバイス管理") << "</title>\n";
         html << "  <style>\n";
         html << generateCSS();
         html << "  </style>\n";
@@ -397,20 +451,20 @@ std::string WebUI::generateDevicePage() {
         html << "<body>\n";
         html << generateNavigation();
         html << "  <div class=\"container\">\n";
-        html << "    <h1>デバイス管理</h1>\n";
+        html << "    <h1>" << translate("device_management", "デバイス管理") << "</h1>\n";
         
         // デバイス一覧テーブル
         html << "    <div class=\"card\">\n";
-        html << "      <h2>登録デバイス一覧</h2>\n";
+        html << "      <h2>" << translate("registered_devices", "登録デバイス一覧") << "</h2>\n";
         html << "      <table class=\"device-table\">\n";
         html << "        <thead>\n";
         html << "          <tr>\n";
-        html << "            <th>ID</th>\n";
-        html << "            <th>名前</th>\n";
-        html << "            <th>プロトコル</th>\n";
-        html << "            <th>テンプレート</th>\n";
-        html << "            <th>状態</th>\n";
-        html << "            <th>操作</th>\n";
+        html << "            <th>" << translate("id", "ID") << "</th>\n";
+        html << "            <th>" << translate("name", "名前") << "</th>\n";
+        html << "            <th>" << translate("protocol", "プロトコル") << "</th>\n";
+        html << "            <th>" << translate("template", "テンプレート") << "</th>\n";
+        html << "            <th>" << translate("state", "状態") << "</th>\n";
+        html << "            <th>" << translate("actions", "操作") << "</th>\n";
         html << "          </tr>\n";
         html << "        </thead>\n";
         html << "        <tbody>\n";
@@ -422,17 +476,17 @@ std::string WebUI::generateDevicePage() {
             html << "            <td>" << device.getProtocol() << "</td>\n";
             html << "            <td>" << device.getTemplateName() << "</td>\n";
             html << "            <td><span class=\"status-" << (device.isEnabled() ? "active" : "inactive") << "\">";
-            html << (device.isEnabled() ? "有効" : "無効") << "</span></td>\n";
+            html << (device.isEnabled() ? translate("enabled", "有効") : translate("disabled", "無効")) << "</span></td>\n";
             html << "            <td>\n";
-            html << "              <button class=\"btn btn-info\" onclick=\"showDeviceDetail('" << device.getId() << "')\">詳細</button>\n";
-            html << "              <button class=\"btn btn-warning\" onclick=\"editDevice('" << device.getId() << "')\">編集</button>\n";
+            html << "              <button class=\"btn btn-info\" onclick=\"showDeviceDetail('" << device.getId() << "')\">" << translate("details", "詳細") << "</button>\n";
+            html << "              <button class=\"btn btn-warning\" onclick=\"editDevice('" << device.getId() << "')\">" << translate("edit", "編集") << "</button>\n";
             html << "            </td>\n";
             html << "          </tr>\n";
         }
         
         if (device_configs.getDevices().empty()) {
             html << "          <tr>\n";
-            html << "            <td colspan=\"6\" class=\"text-center\">登録されているデバイスはありません</td>\n";
+            html << "            <td colspan=\"6\" class=\"text-center\">" << translate("no_devices", "登録されているデバイスはありません") << "</td>\n";
             html << "          </tr>\n";
         }
         
@@ -447,8 +501,8 @@ std::string WebUI::generateDevicePage() {
         
         return html.str();
     } catch (const std::exception& e) {
-        LOG_ERROR("デバイスページ生成エラー: {}", e.what());
-        return createErrorResponse(500, "デバイスページの生成に失敗しました");
+        LOG_ERROR(translate("device_page_generation_error", "デバイスページ生成エラー: {}"), e.what());
+        return createErrorResponse(500, translate("device_page_generation_failed", "デバイスページの生成に失敗しました"));
     }
 }
 
@@ -462,7 +516,7 @@ std::string WebUI::generateConfigPage() {
         html << "<head>\n";
         html << "  <meta charset=\"UTF-8\">\n";
         html << "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-        html << "  <title>OCPP Gateway - 設定管理</title>\n";
+        html << "  <title>OCPP Gateway - " << translate("config", "設定管理") << "</title>\n";
         html << "  <style>\n";
         html << generateCSS();
         html << "  </style>\n";
@@ -470,18 +524,18 @@ std::string WebUI::generateConfigPage() {
         html << "<body>\n";
         html << generateNavigation();
         html << "  <div class=\"container\">\n";
-        html << "    <h1>設定管理</h1>\n";
+        html << "    <h1>" << translate("config", "設定管理") << "</h1>\n";
         
         // システム設定
         const auto& system_config = config_manager.getSystemConfig();
         html << "    <div class=\"card\">\n";
-        html << "      <h2>システム設定</h2>\n";
+        html << "      <h2>" << translate("system_config", "システム設定") << "</h2>\n";
         html << "      <div class=\"config-item\">\n";
-        html << "        <label>ログレベル:</label>\n";
+        html << "        <label>" << translate("log_level", "ログレベル") << ":</label>\n";
         html << "        <span>" << system_config.getLogLevel() << "</span>\n";
         html << "      </div>\n";
         html << "      <div class=\"config-item\">\n";
-        html << "        <label>最大充電ポイント数:</label>\n";
+        html << "        <label>" << translate("max_charge_points", "最大充電ポイント数") << ":</label>\n";
         html << "        <span>" << system_config.getMaxChargePoints() << "</span>\n";
         html << "      </div>\n";
         html << "    </div>\n";
@@ -489,28 +543,40 @@ std::string WebUI::generateConfigPage() {
         // CSMS設定
         const auto& csms_config = config_manager.getCsmsConfig();
         html << "    <div class=\"card\">\n";
-        html << "      <h2>CSMS設定</h2>\n";
+        html << "      <h2>" << translate("csms_config", "CSMS設定") << "</h2>\n";
         html << "      <div class=\"config-item\">\n";
-        html << "        <label>URL:</label>\n";
+        html << "        <label>" << translate("url", "URL") << ":</label>\n";
         html << "        <span>" << csms_config.getUrl() << "</span>\n";
         html << "      </div>\n";
         html << "      <div class=\"config-item\">\n";
-        html << "        <label>再接続間隔:</label>\n";
-        html << "        <span>" << csms_config.getReconnectInterval() << " 秒</span>\n";
+        html << "        <label>" << translate("reconnect_interval", "再接続間隔") << ":</label>\n";
+        html << "        <span>" << csms_config.getReconnectInterval() << " " << translate("seconds", "秒") << "</span>\n";
         html << "      </div>\n";
         html << "      <div class=\"config-item\">\n";
-        html << "        <label>最大再接続回数:</label>\n";
+        html << "        <label>" << translate("max_reconnect_attempts", "最大再接続回数") << ":</label>\n";
         html << "        <span>" << csms_config.getMaxReconnectAttempts() << "</span>\n";
+        html << "      </div>\n";
+        html << "    </div>\n";
+        
+        // 言語設定
+        html << "    <div class=\"card\">\n";
+        html << "      <h2>" << translate("language_settings", "言語設定") << "</h2>\n";
+        html << "      <div class=\"config-item\">\n";
+        html << "        <label>" << translate("current_language", "現在の言語") << ":</label>\n";
+        html << "        <span>" << (getCurrentLanguage() == "en" ? translate("english", "英語") : translate("japanese", "日本語")) << "</span>\n";
+        html << "      </div>\n";
+        html << "      <div class=\"button-group\">\n";
+        html << "        <a href=\"/language\" class=\"btn btn-primary\">" << translate("change_language", "言語を変更") << "</a>\n";
         html << "      </div>\n";
         html << "    </div>\n";
         
         // 操作ボタン
         html << "    <div class=\"card\">\n";
-        html << "      <h2>設定操作</h2>\n";
+        html << "      <h2>" << translate("config_operations", "設定操作") << "</h2>\n";
         html << "      <div class=\"button-group\">\n";
-        html << "        <button class=\"btn btn-primary\" onclick=\"reloadConfig()\">設定再読み込み</button>\n";
-        html << "        <button class=\"btn btn-info\" onclick=\"validateConfig()\">設定検証</button>\n";
-        html << "        <button class=\"btn btn-warning\" onclick=\"backupConfig()\">設定バックアップ</button>\n";
+        html << "        <button class=\"btn btn-primary\" onclick=\"reloadConfig()\">" << translate("reload_config", "設定再読み込み") << "</button>\n";
+        html << "        <button class=\"btn btn-info\" onclick=\"validateConfig()\">" << translate("validate_config", "設定検証") << "</button>\n";
+        html << "        <button class=\"btn btn-warning\" onclick=\"backupConfig()\">" << translate("backup_config", "設定バックアップ") << "</button>\n";
         html << "      </div>\n";
         html << "    </div>\n";
         
@@ -521,8 +587,8 @@ std::string WebUI::generateConfigPage() {
         
         return html.str();
     } catch (const std::exception& e) {
-        LOG_ERROR("設定ページ生成エラー: {}", e.what());
-        return createErrorResponse(500, "設定ページの生成に失敗しました");
+        LOG_ERROR(translate("config_page_generation_error", "設定ページ生成エラー: {}"), e.what());
+        return createErrorResponse(500, translate("config_page_generation_failed", "設定ページの生成に失敗しました"));
     }
 }
 
@@ -533,7 +599,7 @@ std::string WebUI::generateLogPage() {
     html << "<head>\n";
     html << "  <meta charset=\"UTF-8\">\n";
     html << "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-    html << "  <title>OCPP Gateway - ログ表示</title>\n";
+    html << "  <title>OCPP Gateway - " << translate("logs", "ログ表示") << "</title>\n";
     html << "  <style>\n";
     html << generateCSS();
     html << "  </style>\n";
@@ -541,26 +607,76 @@ std::string WebUI::generateLogPage() {
     html << "<body>\n";
     html << generateNavigation();
     html << "  <div class=\"container\">\n";
-    html << "    <h1>ログ表示</h1>\n";
+    html << "    <h1>" << translate("logs", "ログ表示") << "</h1>\n";
     
     html << "    <div class=\"card\">\n";
-    html << "      <h2>最新ログ</h2>\n";
+    html << "      <h2>" << translate("latest_logs", "最新ログ") << "</h2>\n";
     html << "      <div class=\"log-container\">\n";
     html << "        <div class=\"log-entry log-info\">\n";
     html << "          <span class=\"log-time\">2024-12-20 17:00:00</span>\n";
     html << "          <span class=\"log-level\">INFO</span>\n";
-    html << "          <span class=\"log-message\">WebUIサーバーを開始しました</span>\n";
+    html << "          <span class=\"log-message\">" << translate("webui_started", "WebUIサーバーを開始しました") << "</span>\n";
     html << "        </div>\n";
     html << "        <div class=\"log-entry log-info\">\n";
     html << "          <span class=\"log-time\">2024-12-20 17:00:01</span>\n";
     html << "          <span class=\"log-level\">INFO</span>\n";
-    html << "          <span class=\"log-message\">管理APIサーバーを開始しました</span>\n";
+    html << "          <span class=\"log-message\">" << translate("admin_api_started", "管理APIサーバーを開始しました") << "</span>\n";
     html << "        </div>\n";
     html << "        <div class=\"log-entry log-info\">\n";
     html << "          <span class=\"log-time\">2024-12-20 17:00:02</span>\n";
     html << "          <span class=\"log-level\">INFO</span>\n";
-    html << "          <span class=\"log-message\">メトリクス収集を初期化しました</span>\n";
+    html << "          <span class=\"log-message\">" << translate("metrics_initialized", "メトリクス収集を初期化しました") << "</span>\n";
     html << "        </div>\n";
+    html << "      </div>\n";
+    html << "    </div>\n";
+    
+    html << "  </div>\n";
+    html << generateJavaScript();
+    html << "</body>\n";
+    html << "</html>\n";
+    
+    return html.str();
+}
+
+std::string WebUI::generateLanguagePage() {
+    std::ostringstream html;
+    html << "<!DOCTYPE html>\n";
+    html << "<html>\n";
+    html << "<head>\n";
+    html << "  <meta charset=\"UTF-8\">\n";
+    html << "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+    html << "  <title>OCPP Gateway - " << translate("language_settings", "言語設定") << "</title>\n";
+    html << "  <style>\n";
+    html << generateCSS();
+    html << "  </style>\n";
+    html << "</head>\n";
+    html << "<body>\n";
+    html << generateNavigation();
+    html << "  <div class=\"container\">\n";
+    html << "    <h1>" << translate("language_settings", "言語設定") << "</h1>\n";
+    
+    html << "    <div class=\"card\">\n";
+    html << "      <h2>" << translate("select_language", "言語を選択") << "</h2>\n";
+    html << "      <div class=\"language-selection\">\n";
+    
+    // 言語選択リスト
+    std::vector<std::string> available_languages = getAvailableLanguages();
+    std::string current_language = getCurrentLanguage();
+    
+    for (const auto& lang : available_languages) {
+        std::string lang_name = (lang == "en") ? translate("english", "英語") : translate("japanese", "日本語");
+        std::string lang_class = (lang == current_language) ? "language-item selected" : "language-item";
+        
+        html << "        <div class=\"" << lang_class << "\">\n";
+        html << "          <a href=\"?lang=" << lang << "\" class=\"language-link\">\n";
+        html << "            <span class=\"language-name\">" << lang_name << "</span>\n";
+        if (lang == current_language) {
+            html << "            <span class=\"language-current\">(" << translate("current", "現在") << ")</span>\n";
+        }
+        html << "          </a>\n";
+        html << "        </div>\n";
+    }
+    
     html << "      </div>\n";
     html << "    </div>\n";
     
@@ -579,10 +695,11 @@ std::string WebUI::generateNavigation() {
     nav << "      <h2>OCPP Gateway</h2>\n";
     nav << "    </div>\n";
     nav << "    <div class=\"nav-links\">\n";
-    nav << "      <a href=\"/dashboard\">ダッシュボード</a>\n";
-    nav << "      <a href=\"/devices\">デバイス</a>\n";
-    nav << "      <a href=\"/config\">設定</a>\n";
-    nav << "      <a href=\"/logs\">ログ</a>\n";
+    nav << "      <a href=\"/dashboard\">" << translate("dashboard", "ダッシュボード") << "</a>\n";
+    nav << "      <a href=\"/devices\">" << translate("devices", "デバイス") << "</a>\n";
+    nav << "      <a href=\"/config\">" << translate("config", "設定") << "</a>\n";
+    nav << "      <a href=\"/logs\">" << translate("logs", "ログ") << "</a>\n";
+    nav << "      <a href=\"/language\">" << translate("language", "言語") << "</a>\n";
     nav << "    </div>\n";
     nav << "  </nav>\n";
     return nav.str();
@@ -608,14 +725,14 @@ std::string WebUI::generateCSS() {
     css << "    .device-table { width: 100%; border-collapse: collapse; }\n";
     css << "    .device-table th, .device-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }\n";
     css << "    .device-table th { background-color: #f8f9fa; font-weight: bold; }\n";
-    css << "    .btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem; transition: opacity 0.3s; }\n";
+    css << "    .btn { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 0.5rem; transition: opacity 0.3s; display: inline-block; text-decoration: none; }\n";
     css << "    .btn:hover { opacity: 0.8; }\n";
     css << "    .btn-primary { background-color: #2196F3; color: white; }\n";
     css << "    .btn-info { background-color: #00BCD4; color: white; }\n";
     css << "    .btn-warning { background-color: #FF9800; color: white; }\n";
     css << "    .config-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee; }\n";
     css << "    .config-item label { font-weight: bold; }\n";
-    css << "    .button-group { display: flex; gap: 1rem; flex-wrap: wrap; }\n";
+    css << "    .button-group { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }\n";
     css << "    .event-list { max-height: 300px; overflow-y: auto; }\n";
     css << "    .event-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee; }\n";
     css << "    .event-time { color: #666; font-size: 0.9rem; }\n";
@@ -627,6 +744,13 @@ std::string WebUI::generateCSS() {
     css << "    .log-warning .log-level { color: #FF9800; }\n";
     css << "    .log-error .log-level { color: #F44336; }\n";
     css << "    .text-center { text-align: center; }\n";
+    css << "    .language-selection { display: flex; flex-direction: column; gap: 1rem; }\n";
+    css << "    .language-item { padding: 1rem; border: 1px solid #ddd; border-radius: 4px; transition: all 0.3s; }\n";
+    css << "    .language-item:hover { background-color: #f5f5f5; }\n";
+    css << "    .language-item.selected { border-color: #2196F3; background-color: #e3f2fd; }\n";
+    css << "    .language-link { text-decoration: none; color: #333; display: flex; justify-content: space-between; align-items: center; }\n";
+    css << "    .language-name { font-weight: bold; }\n";
+    css << "    .language-current { color: #2196F3; }\n";
     css << "    @media (max-width: 768px) {\n";
     css << "      .navbar { flex-direction: column; gap: 1rem; }\n";
     css << "      .nav-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }\n";
@@ -642,27 +766,27 @@ std::string WebUI::generateJavaScript() {
     std::ostringstream js;
     js << "  <script>\n";
     js << "    function showDeviceDetail(deviceId) {\n";
-    js << "      alert('デバイス詳細: ' + deviceId + ' (未実装)');\n";
+    js << "      alert('" << translate("device_detail", "デバイス詳細") << ": ' + deviceId + ' (" << translate("not_implemented", "未実装") << ")');\n";
     js << "    }\n";
     js << "    function editDevice(deviceId) {\n";
-    js << "      alert('デバイス編集: ' + deviceId + ' (未実装)');\n";
+    js << "      alert('" << translate("device_edit", "デバイス編集") << ": ' + deviceId + ' (" << translate("not_implemented", "未実装") << ")');\n";
     js << "    }\n";
     js << "    function reloadConfig() {\n";
-    js << "      if (confirm('設定を再読み込みしますか？')) {\n";
-    js << "        alert('設定再読み込み (未実装)');\n";
+    js << "      if (confirm('" << translate("reload_config_confirm", "設定を再読み込みしますか？") << "')) {\n";
+    js << "        alert('" << translate("reload_config", "設定再読み込み") << " (" << translate("not_implemented", "未実装") << ")');\n";
     js << "      }\n";
     js << "    }\n";
     js << "    function validateConfig() {\n";
-    js << "      alert('設定検証 (未実装)');\n";
+    js << "      alert('" << translate("validate_config", "設定検証") << " (" << translate("not_implemented", "未実装") << ")');\n";
     js << "    }\n";
     js << "    function backupConfig() {\n";
-    js << "      alert('設定バックアップ (未実装)');\n";
+    js << "      alert('" << translate("backup_config", "設定バックアップ") << " (" << translate("not_implemented", "未実装") << ")');\n";
     js << "    }\n";
     js << "    // 自動更新（30秒間隔）\n";
     js << "    setInterval(function() {\n";
     js << "      if (window.location.pathname === '/dashboard' || window.location.pathname === '/') {\n";
     js << "        // ダッシュボードのみ自動更新\n";
-    js << "        console.log('ダッシュボード自動更新 (未実装)');\n";
+    js << "        console.log('" << translate("dashboard_auto_refresh", "ダッシュボード自動更新") << " (" << translate("not_implemented", "未実装") << ")');\n";
     js << "      }\n";
     js << "    }, 30000);\n";
     js << "  </script>\n";
@@ -670,4 +794,4 @@ std::string WebUI::generateJavaScript() {
 }
 
 } // namespace api
-} // namespace ocpp_gateway 
+} // namespace ocpp_gateway

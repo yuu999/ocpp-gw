@@ -8,6 +8,9 @@
 #include <functional>
 
 namespace ocpp_gateway {
+namespace common {
+class LanguageManager;
+}
 namespace api {
 
 /**
@@ -63,8 +66,40 @@ public:
      */
     void setAuthentication(bool enabled, const std::string& username = "", 
                           const std::string& password = "");
+                          
+    /**
+     * @brief 言語を設定
+     * @param language 言語コード (例: "en", "ja")
+     * @return 成功時true、失敗時false
+     */
+    bool setLanguage(const std::string& language);
+    
+    /**
+     * @brief 現在の言語を取得
+     * @return 言語コード
+     */
+    std::string getCurrentLanguage() const;
+    
+    /**
+     * @brief 利用可能な言語のリストを取得
+     * @return 言語コードのリスト
+     */
+    std::vector<std::string> getAvailableLanguages() const;
 
 private:
+    /**
+     * @brief 文字列を翻訳
+     * @param key 翻訳キー
+     * @param default_value デフォルト値
+     * @return 翻訳された文字列
+     */
+    std::string translate(const std::string& key, const std::string& default_value = "") const;
+    
+    /**
+     * @brief 言語選択ページを生成
+     * @return HTMLコンテンツ
+     */
+    std::string generateLanguagePage();
     /**
      * @brief HTTPサーバーのメインループ
      */
