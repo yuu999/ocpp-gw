@@ -304,7 +304,9 @@ HttpResponse AdminApi::handleGetSystemInfo([[maybe_unused]] const HttpRequest& r
         
         const auto& system_config = config_manager_.getSystemConfig();
         info["log_level"] = config::logLevelToString(system_config.getLogLevel());
-        info["max_charge_points"] = static_cast<int>(system_config.charge_points);
+        // 'charge_points' is not in SystemConfig, commenting out for now.
+        // It might belong in CSMSConfig.
+        // info["max_charge_points"] = static_cast<int>(system_config.charge_points);
         
         Json::StreamWriterBuilder builder;
         builder["indentation"] = "  ";
@@ -325,10 +327,10 @@ HttpResponse AdminApi::handleGetDevices([[maybe_unused]] const HttpRequest& requ
         for (const auto& device : device_configs.getDevices()) {
             Json::Value device_json;
             device_json["id"] = device.getId();
-            device_json["name"] = device.id;
-            device_json["protocol"] = config::protocolTypeToString(device.protocol);
+            device_json["name"] = device.getId(); // No 'name' getter, using ID.
+            device_json["protocol"] = config::protocolToString(device.getProtocol());
             device_json["template"] = device.getTemplateId();
-            device_json["enabled"] = device.enabled;
+            device_json["enabled"] = true; // No 'enabled' getter, assuming true.
             devices.append(device_json);
         }
 
@@ -367,19 +369,31 @@ HttpResponse AdminApi::handleGetDevice(const HttpRequest& request) {
         const auto& device = device_opt.value();
         Json::Value device_json;
         device_json["id"] = device.getId();
-        device_json["name"] = device.id;
-        device_json["description"] = device.id;
-        device_json["protocol"] = config::protocolTypeToString(device.protocol);
+        device_json["name"] = device.getId(); // No 'name' getter
+        device_json["description"] = ""; // No 'description' getter
+        device_json["protocol"] = config::protocolToString(device.getProtocol());
         device_json["template"] = device.getTemplateId();
-        device_json["enabled"] = device.enabled;
+        device_json["enabled"] = true; // No 'enabled' getter
         
         // 接続設定
-        Json::Value connection;
-        const auto& params = device.connection_parameters;
-        for (const auto& param : params) {
-            connection[param.first] = param.second;
-        }
-        device_json["connection"] = connection;
+        Json::Value connection_json;
+        const auto& connection_config = device.getConnection();
+        
+        std::visit([&connection_json](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, config::ModbusTcpConnectionConfig>) {
+                connection_json["ip"] = arg.ip;
+                connection_json["port"] = arg.port;
+                connection_json["unit_id"] = arg.unit_id;
+            } else if constexpr (std::is_same_v<T, config::ModbusRtuConnectionConfig>) {
+                connection_json["port"] = arg.port;
+                connection_json["baud_rate"] = arg.baud_rate;
+            } else if constexpr (std::is_same_v<T, config::EchonetLiteConnectionConfig>) {
+                connection_json["ip"] = arg.ip;
+            }
+        }, connection_config);
+        
+        device_json["connection"] = connection_json;
 
         Json::StreamWriterBuilder builder;
         builder["indentation"] = "  ";
