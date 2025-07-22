@@ -525,10 +525,12 @@ bool WebSocketClient::isConnected() const {
     return state_ == ConnectionState::CONNECTED;
 }
 
+// cppcheck-suppress unusedFunction
 int WebSocketClient::getReconnectAttempts() const {
     return reconnect_attempts_;
 }
 
+// cppcheck-suppress unusedFunction
 void WebSocketClient::resetReconnectAttempts() {
     reconnect_attempts_ = 0;
 }

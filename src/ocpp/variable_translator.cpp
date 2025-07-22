@@ -12,6 +12,7 @@ VariableTranslator::VariableTranslator(const MappingTemplate& mapping_template)
     : mapping_template_(mapping_template) {
 }
 
+// cppcheck-suppress unusedFunction
 DeviceData VariableTranslator::translateToDevice(const std::string& ocpp_name, const OcppValue& value) const {
     // Find the variable in the mapping template
     auto var_opt = mapping_template_.getVariable(ocpp_name);
@@ -46,6 +47,7 @@ DeviceData VariableTranslator::translateToDevice(const std::string& ocpp_name, c
     }
 }
 
+// cppcheck-suppress unusedFunction
 OcppValue VariableTranslator::translateToOcpp(const std::string& ocpp_name, const DeviceData& data) const {
     // Find the variable in the mapping template
     auto var_opt = mapping_template_.getVariable(ocpp_name);

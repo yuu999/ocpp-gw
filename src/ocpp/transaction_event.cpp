@@ -146,18 +146,22 @@ int TransactionEventRequest::getSeqNo() const {
     return seqNo_;
 }
 
+// cppcheck-suppress unusedFunction
 const Transaction& TransactionEventRequest::getTransactionInfo() const {
     return transactionInfo_;
 }
 
+// cppcheck-suppress unusedFunction
 const EVSE& TransactionEventRequest::getEvse() const {
     return evse_;
 }
 
+// cppcheck-suppress unusedFunction
 const std::optional<IdToken>& TransactionEventRequest::getIdToken() const {
     return idToken_;
 }
 
+// cppcheck-suppress unusedFunction
 const std::optional<std::vector<MeterValue>>& TransactionEventRequest::getMeterValues() const {
     return meterValues_;
 }
@@ -408,10 +412,12 @@ TransactionEventResponse::TransactionEventResponse(
       idTokenInfo_(idTokenInfo),
       chargingPriority_(chargingPriority) {}
 
+// cppcheck-suppress unusedFunction
 const std::optional<nlohmann::json>& TransactionEventResponse::getIdTokenInfo() const {
     return idTokenInfo_;
 }
 
+// cppcheck-suppress unusedFunction
 const std::optional<int>& TransactionEventResponse::getChargingPriority() const {
     return chargingPriority_;
 }
