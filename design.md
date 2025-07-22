@@ -282,7 +282,7 @@ CSMS → OcppClientManager → MappingEngine → DeviceAdapter → 充電器
 ### 5.1 通信エラー
 - **CSMS切断**: オフラインキューイング、再接続時自動送信
 - **デバイス無応答**: 設定回数リトライ後Faulted状態通知
-- **プロトコルエラー**: ログ記録、上位レイヤへエラー通知
+- **プロトコルエラー**: ログ記録、上位レイヤーへエラー通知
 
 ### 5.2 設定エラー
 - **不正なマッピング**: 起動時検証、エラー時はデフォルト値使用
@@ -327,10 +327,34 @@ Logger::log(LogLevel::ERROR, "Modbus", "Failed to read register 40001");
 - WebSocket接続プールでスケーラビリティ確保
 
 ### 8.2 メモリ管理
-- スマートポインタ活用でメモリリーク防止
+- スマートポインター活用でメモリリーク防止
 - オブジェクトプール使用でアロケーション最適化
 
 ### 8.3 スレッド設計
 - I/Oスレッド: WebSocket/UDP/シリアル通信
 - ワーカースレッド: データ変換・ビジネスロジック
 - 管理スレッド: 設定再読み込み・ヘルスチェック 
+
+## 9. ソースコードディレクトリ構成
+
+```text
+.
+├── include/                # Public C++ headers
+│   └── ocpp_gateway/       # Gateway modules grouped by domain
+│       ├── api/            # REST, CLI, and Web UI interface definitions
+│       ├── common/         # Core utilities (logging, config, TLS, etc.)
+│       ├── device/         # Device adapter abstractions (EL / Modbus)
+│       ├── mapping/        # Variable mapping engine
+│       └── ocpp/           # OCPP 2.0.1 protocol implementation
+├── src/                    # Implementations corresponding to headers
+│   └── ...                 # Mirrors the structure of include/
+├── config/                 # YAML configuration (system, csms, devices, templates)
+├── docs/                   # User & developer documentation (this file, guides)
+├── tests/                  # Unit & integration test suites
+│   ├── unit/               # Component-level tests
+│   └── integration/        # End-to-end scenario tests
+├── examples/               # Minimal runnable code samples
+├── scripts/                # Service unit files and helper scripts
+├── work_log/               # Chronological development logs
+└── third_party/            # External libraries (when vendored)
+``` 

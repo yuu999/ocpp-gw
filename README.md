@@ -44,6 +44,24 @@ cmake ..
 make
 ```
 
+#### Windows (MSVC)
+
+```powershell
+# 依存ライブラリのインストール (vcpkgを使用)
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+bootstrap-vcpkg.bat
+vcpkg.exe install boost-asio:x64-windows boost-beast:x64-windows yaml-cpp:x64-windows jsoncpp:x64-windows spdlog:x64-windows openssl:x64-windows libmodbus:x64-windows
+cd ..
+
+# ビルド
+mkdir build
+cd build
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE="../vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
+cmake --build . --config Release
+ctest -C Release
+```
+
 ### テスト実行
 
 ```bash
@@ -76,12 +94,19 @@ ocpp-gateway --config /path/to/system.yaml
 
 ### プロジェクト構造
 
-- `include/`: ヘッダーファイル
-- `src/`: ソースファイル
-- `tests/`: テストファイル
-- `config/`: 設定ファイル
-- `scripts/`: ユーティリティスクリプト
-- `third_party/`: サードパーティ依存関係
+```text
+プロジェクトトップ
+├── include/                # Public C++ headers
+├── src/                    # Implementation sources
+├── config/                 # YAML configuration & templates
+├── docs/                   # Guides & reference docs
+├── tests/                  # Unit & integration tests
+├── examples/               # Sample programs
+├── scripts/                # Helper scripts & service files
+├── work_log/               # Development history logs
+├── third_party/            # External dependencies (vendored or submodules)
+└── CMakeLists.txt          # Top-level build script
+```
 
 ### 新しいデバイステンプレートの追加
 
