@@ -6,6 +6,7 @@
 #include <set>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 
 namespace ocpp_gateway {
 namespace common {
