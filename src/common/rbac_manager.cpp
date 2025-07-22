@@ -243,7 +243,7 @@ bool RbacManager::changePassword(const std::string& username, const std::string&
     return true;
 }
 
-std::string RbacManager::generateToken(const std::string& username, int duration_hours) const {
+std::string RbacManager::generateToken(const std::string& username, [[maybe_unused]] int duration_hours) const {
     // Generate a simple token (in a real implementation, you would use JWT)
     std::random_device rd;
     std::mt19937 gen(rd());

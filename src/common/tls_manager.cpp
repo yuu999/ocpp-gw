@@ -189,7 +189,7 @@ bool TlsManager::validatePrivateKey(const std::string& key_path) const {
     return has_begin && has_end;
 }
 
-std::optional<int> TlsManager::checkCertificateExpiration(const std::string& cert_path, int days_warning) const {
+std::optional<int> TlsManager::checkCertificateExpiration(const std::string& cert_path, [[maybe_unused]] int days_warning) const {
     CertificateInfo info = getCertificateInfo(cert_path);
     if (!info.is_valid) {
         return std::nullopt;
@@ -208,7 +208,7 @@ bool TlsManager::generateSelfSignedCertificate(
     const std::string& cert_path,
     const std::string& key_path,
     const std::string& common_name,
-    int days_valid) const {
+    [[maybe_unused]] int days_valid) const {
     
     // This is a placeholder implementation
     // In a real implementation, you would use OpenSSL APIs to generate certificates

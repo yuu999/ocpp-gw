@@ -52,7 +52,7 @@ bool EvseStateMachine::processEvent(EvseEvent event, const nlohmann::json& data)
                     handleStateTransition(EvseState::FAULTED);
                     return true;
                 default:
-                    LOG_WARNING("Invalid event {} for state AVAILABLE", static_cast<int>(event));
+                    LOG_WARN("Invalid event {} for state AVAILABLE", static_cast<int>(event));
                     return false;
             }
             break;
@@ -79,7 +79,7 @@ bool EvseStateMachine::processEvent(EvseEvent event, const nlohmann::json& data)
                     handleStateTransition(EvseState::FAULTED);
                     return true;
                 default:
-                    LOG_WARNING("Invalid event {} for state PREPARING", static_cast<int>(event));
+                    LOG_WARN("Invalid event {} for state PREPARING", static_cast<int>(event));
                     return false;
             }
             break;
@@ -113,7 +113,7 @@ bool EvseStateMachine::processEvent(EvseEvent event, const nlohmann::json& data)
                     handleStateTransition(EvseState::FAULTED);
                     return true;
                 default:
-                    LOG_WARNING("Invalid event {} for state CHARGING", static_cast<int>(event));
+                    LOG_WARN("Invalid event {} for state CHARGING", static_cast<int>(event));
                     return false;
             }
             break;
@@ -144,7 +144,7 @@ bool EvseStateMachine::processEvent(EvseEvent event, const nlohmann::json& data)
                     handleStateTransition(EvseState::FAULTED);
                     return true;
                 default:
-                    LOG_WARNING("Invalid event {} for state SUSPENDED_EV", static_cast<int>(event));
+                    LOG_WARN("Invalid event {} for state SUSPENDED_EV", static_cast<int>(event));
                     return false;
             }
             break;
@@ -175,7 +175,7 @@ bool EvseStateMachine::processEvent(EvseEvent event, const nlohmann::json& data)
                     handleStateTransition(EvseState::FAULTED);
                     return true;
                 default:
-                    LOG_WARNING("Invalid event {} for state SUSPENDED_EVSE", static_cast<int>(event));
+                    LOG_WARN("Invalid event {} for state SUSPENDED_EVSE", static_cast<int>(event));
                     return false;
             }
             break;
@@ -189,7 +189,7 @@ bool EvseStateMachine::processEvent(EvseEvent event, const nlohmann::json& data)
                     handleStateTransition(EvseState::FAULTED);
                     return true;
                 default:
-                    LOG_WARNING("Invalid event {} for state FINISHING", static_cast<int>(event));
+                    LOG_WARN("Invalid event {} for state FINISHING", static_cast<int>(event));
                     return false;
             }
             break;
@@ -209,7 +209,7 @@ bool EvseStateMachine::processEvent(EvseEvent event, const nlohmann::json& data)
                     handleStateTransition(EvseState::FAULTED);
                     return true;
                 default:
-                    LOG_WARNING("Invalid event {} for state RESERVED", static_cast<int>(event));
+                    LOG_WARN("Invalid event {} for state RESERVED", static_cast<int>(event));
                     return false;
             }
             break;
@@ -223,7 +223,7 @@ bool EvseStateMachine::processEvent(EvseEvent event, const nlohmann::json& data)
                     handleStateTransition(EvseState::FAULTED);
                     return true;
                 default:
-                    LOG_WARNING("Invalid event {} for state UNAVAILABLE", static_cast<int>(event));
+                    LOG_WARN("Invalid event {} for state UNAVAILABLE", static_cast<int>(event));
                     return false;
             }
             break;
@@ -234,7 +234,7 @@ bool EvseStateMachine::processEvent(EvseEvent event, const nlohmann::json& data)
                     handleStateTransition(EvseState::AVAILABLE);
                     return true;
                 default:
-                    LOG_WARNING("Invalid event {} for state FAULTED", static_cast<int>(event));
+                    LOG_WARN("Invalid event {} for state FAULTED", static_cast<int>(event));
                     return false;
             }
             break;
@@ -390,7 +390,7 @@ bool EvseStateMachine::stopTransaction(const std::string& reason) {
 
 void EvseStateMachine::addMeterValue(double value) {
     if (!current_transaction_) {
-        LOG_WARNING("Cannot add meter value: no transaction in progress for EVSE {} Connector {}", 
+        LOG_WARN("Cannot add meter value: no transaction in progress for EVSE {} Connector {}", 
                    evse_id_, connector_id_);
         return;
     }
@@ -510,7 +510,7 @@ void EvseStateMachine::onMeterValueTimer(const boost::system::error_code& ec) {
                 }
                 addMeterValue(meterValue);
             } else {
-                LOG_WARNING("Meter value variable not found or empty");
+                LOG_WARN("Meter value variable not found or empty");
             }
         } catch (const std::exception& e) {
             LOG_ERROR("Error getting meter value: {}", e.what());

@@ -41,7 +41,7 @@ bool I18nManager::loadResources(const std::string& resource_dir) {
     std::string en_file = resource_dir + "/en.json";
     if (std::filesystem::exists(en_file)) {
         if (!loadLanguageFile(Language::ENGLISH, en_file)) {
-            LOG_WARNING("Failed to load English translations from: {}", en_file);
+            LOG_WARN("Failed to load English translations from: {}", en_file);
         }
     }
     
@@ -49,7 +49,7 @@ bool I18nManager::loadResources(const std::string& resource_dir) {
     std::string ja_file = resource_dir + "/ja.json";
     if (std::filesystem::exists(ja_file)) {
         if (!loadLanguageFile(Language::JAPANESE, ja_file)) {
-            LOG_WARNING("Failed to load Japanese translations from: {}", ja_file);
+            LOG_WARN("Failed to load Japanese translations from: {}", ja_file);
         }
     }
     
