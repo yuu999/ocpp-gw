@@ -55,7 +55,7 @@ add_library(ocpp-gateway-common STATIC ${COMMON_SOURCES})
 target_link_libraries(ocpp-gateway-common
     ${Boost_LIBRARIES}
     yaml-cpp
-    ${JSONCPP_LIBRARIES}
+    # ${JSONCPP_LIBRARIES}  # Windows環境では無効化
     spdlog::spdlog
     Threads::Threads
 )
@@ -65,7 +65,7 @@ add_library(ocpp-gateway-api STATIC ${API_SOURCES})
 target_link_libraries(ocpp-gateway-api
     ocpp-gateway-common
     ${Boost_LIBRARIES}
-    ${JSONCPP_LIBRARIES}
+    # ${JSONCPP_LIBRARIES}  # Windows環境では無効化
     Threads::Threads
 )
 
@@ -74,7 +74,7 @@ add_library(ocpp-gateway-device STATIC ${DEVICE_SOURCES})
 target_link_libraries(ocpp-gateway-device
     ocpp-gateway-common
     ${Boost_LIBRARIES}
-    ${LIBMODBUS_LIBRARIES}
+    # ${LIBMODBUS_LIBRARIES}  # Windows環境では無効化
     Threads::Threads
 )
 
@@ -93,7 +93,7 @@ target_link_libraries(ocpp-gateway-ocpp
     ${Boost_LIBRARIES}
     OpenSSL::SSL
     OpenSSL::Crypto
-    ${JSONCPP_LIBRARIES}
+    # ${JSONCPP_LIBRARIES}  # Windows環境では無効化
     Threads::Threads
 )
 
@@ -120,8 +120,8 @@ target_include_directories(ocpp-gateway-common PUBLIC
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/third_party
     ${Boost_INCLUDE_DIRS}
-    ${JSONCPP_INCLUDE_DIRS}
-    ${LIBMODBUS_INCLUDE_DIRS}
+    # ${JSONCPP_INCLUDE_DIRS}  # Windows環境では無効化
+    # ${LIBMODBUS_INCLUDE_DIRS}  # Windows環境では無効化
 )
 
 # 各ライブラリに同じインクルードディレクトリを設定
@@ -130,7 +130,7 @@ foreach(lib ocpp-gateway-api ocpp-gateway-device ocpp-gateway-mapping ocpp-gatew
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/third_party
         ${Boost_INCLUDE_DIRS}
-        ${JSONCPP_INCLUDE_DIRS}
-        ${LIBMODBUS_INCLUDE_DIRS}
+        # ${JSONCPP_INCLUDE_DIRS}  # Windows環境では無効化
+        # ${LIBMODBUS_INCLUDE_DIRS}  # Windows環境では無効化
     )
 endforeach() 

@@ -22,7 +22,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # 依存ライブラリの検出
-find_package(PkgConfig REQUIRED)
+# find_package(PkgConfig REQUIRED)  # Windows環境では無効化
 find_package(Boost REQUIRED COMPONENTS system filesystem thread program_options)
 find_package(Threads REQUIRED)
 
@@ -33,14 +33,14 @@ find_package(OpenSSL REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 # jsoncpp
-pkg_check_modules(JSONCPP jsoncpp)
-if(NOT JSONCPP_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(JSONCPP REQUIRED jsoncpp)
-endif()
+# pkg_check_modules(JSONCPP jsoncpp)  # Windows環境では無効化
+# if(NOT JSONCPP_FOUND)
+#     find_package(PkgConfig REQUIRED)
+#     pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+# endif()
 
 # libmodbus
-pkg_check_modules(LIBMODBUS REQUIRED libmodbus)
+# pkg_check_modules(LIBMODBUS REQUIRED libmodbus)  # Windows環境では無効化
 
 # spdlog
 find_package(spdlog REQUIRED)
