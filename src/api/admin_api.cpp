@@ -1,5 +1,6 @@
 #include "ocpp_gateway/api/admin_api.h"
 #include "ocpp_gateway/common/logger.h"
+#include "ocpp_gateway/common/metrics_collector.h"
 #include <json/json.h>
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -118,10 +119,10 @@ void AdminApi::setAuthentication(bool enabled, const std::string& username, cons
 void AdminApi::runServer() {
     try {
         auto const address = net::ip::make_address(bind_address_);
-        auto const port = static_cast<unsigned short>(port_);
+        [[maybe_unused]] auto const port = static_cast<unsigned short>(port_);
 
         net::io_context ioc{1};
-        beast::tcp_acceptor acceptor{ioc, {address, port}};
+        net::ip::tcp::acceptor acceptor{ioc, {address, port_}};
 
         while (running_.load()) {
             beast::tcp_stream stream{ioc};
@@ -201,7 +202,7 @@ void AdminApi::runServer() {
 
             // 接続を閉じる
             beast::error_code ec;
-            stream.socket().shutdown(beast::tcp_socket::shutdown_send, ec);
+            stream.socket().shutdown(net::ip::tcp::socket::shutdown_send, ec);
         }
     } catch (const std::exception& e) {
         LOG_ERROR("管理APIサーバーエラー: {}", e.what());
@@ -292,7 +293,7 @@ HttpResponse AdminApi::createErrorResponse(int status_code, const std::string& m
     return createJsonResponse(status_code, json_string);
 }
 
-HttpResponse AdminApi::handleGetSystemInfo(const HttpRequest& request) {
+HttpResponse AdminApi::handleGetSystemInfo([[maybe_unused]] const HttpRequest& request) {
     try {
         Json::Value info;
         info["name"] = "OCPP 2.0.1 Gateway Middleware";
@@ -302,8 +303,8 @@ HttpResponse AdminApi::handleGetSystemInfo(const HttpRequest& request) {
         info["uptime_seconds"] = std::time(nullptr) - start_time_;
         
         const auto& system_config = config_manager_.getSystemConfig();
-        info["log_level"] = system_config.getLogLevel();
-        info["max_charge_points"] = system_config.getMaxChargePoints();
+        info["log_level"] = config::logLevelToString(system_config.getLogLevel());
+        info["max_charge_points"] = static_cast<int>(system_config.charge_points);
         
         Json::StreamWriterBuilder builder;
         builder["indentation"] = "  ";
@@ -316,7 +317,7 @@ HttpResponse AdminApi::handleGetSystemInfo(const HttpRequest& request) {
     }
 }
 
-HttpResponse AdminApi::handleGetDevices(const HttpRequest& request) {
+HttpResponse AdminApi::handleGetDevices([[maybe_unused]] const HttpRequest& request) {
     try {
         const auto& device_configs = config_manager_.getDeviceConfigs();
         
@@ -324,10 +325,10 @@ HttpResponse AdminApi::handleGetDevices(const HttpRequest& request) {
         for (const auto& device : device_configs.getDevices()) {
             Json::Value device_json;
             device_json["id"] = device.getId();
-            device_json["name"] = device.getName();
-            device_json["protocol"] = device.getProtocol();
-            device_json["template"] = device.getTemplateName();
-            device_json["enabled"] = device.isEnabled();
+            device_json["name"] = device.id;
+            device_json["protocol"] = config::protocolTypeToString(device.protocol);
+            device_json["template"] = device.getTemplateId();
+            device_json["enabled"] = device.enabled;
             devices.append(device_json);
         }
 
@@ -366,15 +367,15 @@ HttpResponse AdminApi::handleGetDevice(const HttpRequest& request) {
         const auto& device = device_opt.value();
         Json::Value device_json;
         device_json["id"] = device.getId();
-        device_json["name"] = device.getName();
-        device_json["description"] = device.getDescription();
-        device_json["protocol"] = device.getProtocol();
-        device_json["template"] = device.getTemplateName();
-        device_json["enabled"] = device.isEnabled();
+        device_json["name"] = device.id;
+        device_json["description"] = device.id;
+        device_json["protocol"] = config::protocolTypeToString(device.protocol);
+        device_json["template"] = device.getTemplateId();
+        device_json["enabled"] = device.enabled;
         
         // 接続設定
         Json::Value connection;
-        const auto& params = device.getConnectionParameters();
+        const auto& params = device.connection_parameters;
         for (const auto& param : params) {
             connection[param.first] = param.second;
         }
@@ -392,27 +393,27 @@ HttpResponse AdminApi::handleGetDevice(const HttpRequest& request) {
 }
 
 // その他のハンドラーメソッドは簡易実装
-HttpResponse AdminApi::handleAddDevice(const HttpRequest& request) {
+HttpResponse AdminApi::handleAddDevice([[maybe_unused]] const HttpRequest& request) {
     return createErrorResponse(501, "デバイス追加機能は未実装です");
 }
 
-HttpResponse AdminApi::handleUpdateDevice(const HttpRequest& request) {
+HttpResponse AdminApi::handleUpdateDevice([[maybe_unused]] const HttpRequest& request) {
     return createErrorResponse(501, "デバイス更新機能は未実装です");
 }
 
-HttpResponse AdminApi::handleDeleteDevice(const HttpRequest& request) {
+HttpResponse AdminApi::handleDeleteDevice([[maybe_unused]] const HttpRequest& request) {
     return createErrorResponse(501, "デバイス削除機能は未実装です");
 }
 
-HttpResponse AdminApi::handleGetConfig(const HttpRequest& request) {
+HttpResponse AdminApi::handleGetConfig([[maybe_unused]] const HttpRequest& request) {
     return createErrorResponse(501, "設定取得機能は未実装です");
 }
 
-HttpResponse AdminApi::handleUpdateConfig(const HttpRequest& request) {
+HttpResponse AdminApi::handleUpdateConfig([[maybe_unused]] const HttpRequest& request) {
     return createErrorResponse(501, "設定更新機能は未実装です");
 }
 
-HttpResponse AdminApi::handleReloadConfig(const HttpRequest& request) {
+HttpResponse AdminApi::handleReloadConfig([[maybe_unused]] const HttpRequest& request) {
     try {
         if (config_manager_.reloadAllConfigs()) {
             Json::Value response;
@@ -436,7 +437,7 @@ HttpResponse AdminApi::handleReloadConfig(const HttpRequest& request) {
 
 HttpResponse AdminApi::handleGetMetrics(const HttpRequest& request) {
     try {
-        auto& metrics_collector = common::MetricsCollector::getInstance();
+        auto& metrics_collector = ocpp_gateway::common::MetricsCollector::getInstance();
         
         // フォーマットパラメータをチェック
         std::string format = "json"; // デフォルトはJSON
@@ -466,7 +467,7 @@ HttpResponse AdminApi::handleGetMetrics(const HttpRequest& request) {
     }
 }
 
-HttpResponse AdminApi::handleGetHealth(const HttpRequest& request) {
+HttpResponse AdminApi::handleGetHealth([[maybe_unused]] const HttpRequest& request) {
     Json::Value health;
     health["status"] = "healthy";
     health["timestamp"] = std::time(nullptr);
