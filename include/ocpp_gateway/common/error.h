@@ -64,7 +64,7 @@ public:
         : OcppGatewayException(message + " (code: " + std::to_string(device_error_code) + ")"),
           device_error_code_(device_error_code) {}
     
-    int device_error_code() const __attribute__((unused)) { return device_error_code_; }
+    int device_error_code() const { return device_error_code_; }
 
 private:
     int device_error_code_ = 0;
@@ -117,7 +117,7 @@ public:
      * @param message Error message prefix
      * @return NetworkError exception
      */
-    static NetworkError makeNetworkError(const std::error_code& ec, const std::string& message) __attribute__((unused)) {
+    static NetworkError makeNetworkError(const std::error_code& ec, const std::string& message) {
         return NetworkError(message, ec);
     }
     
@@ -127,7 +127,7 @@ public:
      * @param message Error message prefix
      * @return DeviceError exception
      */
-    static DeviceError makeDeviceError(int error_code, const std::string& message) __attribute__((unused)) {
+    static DeviceError makeDeviceError(int error_code, const std::string& message) {
         return DeviceError(message, error_code);
     }
     
@@ -137,7 +137,7 @@ public:
      * @param message Error message if operation failed
      * @throws OcppGatewayException if success is false
      */
-    static void checkOperation(bool success, const std::string& message) __attribute__((unused)) {
+    static void checkOperation(bool success, const std::string& message) {
         if (!success) {
             throw OcppGatewayException(message);
         }
@@ -150,7 +150,7 @@ public:
      * @throws OcppGatewayException if ptr is null
      */
     template<typename T>
-    static void checkNotNull(const T* ptr, const std::string& message) __attribute__((unused)) {
+    static void checkNotNull(const T* ptr, const std::string& message) {
         if (ptr == nullptr) {
             throw OcppGatewayException(message);
         }

@@ -87,16 +87,16 @@ public:
 
     // Getters and setters
     const std::string& getUrl() const { return url_; }
-    void setUrl(const std::string& url) __attribute__((unused)) { url_ = url; }
+    void setUrl(const std::string& url) { url_ = url; }
 
     int getReconnectInterval() const { return reconnect_interval_sec_; }
-    void setReconnectInterval(int interval) __attribute__((unused)) { reconnect_interval_sec_ = interval; }
+    void setReconnectInterval(int interval) { reconnect_interval_sec_ = interval; }
 
     int getMaxReconnectAttempts() const { return max_reconnect_attempts_; }
-    void setMaxReconnectAttempts(int attempts) __attribute__((unused)) { max_reconnect_attempts_ = attempts; }
+    void setMaxReconnectAttempts(int attempts) { max_reconnect_attempts_ = attempts; }
 
-    int getHeartbeatInterval() const __attribute__((unused)) { return heartbeat_interval_sec_; }
-    void setHeartbeatInterval(int interval) __attribute__((unused)) { heartbeat_interval_sec_ = interval; }
+    int getHeartbeatInterval() const { return heartbeat_interval_sec_; }
+    void setHeartbeatInterval(int interval) { heartbeat_interval_sec_ = interval; }
 
 private:
     std::string url_;
