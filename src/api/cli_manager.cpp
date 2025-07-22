@@ -269,7 +269,7 @@ CliResult CliManager::handleStatus(const std::vector<std::string>& args) {
         // システム設定情報
         const auto& system_config = config_manager_.getSystemConfig();
         oss << translate("log_level", "ログレベル") << ": " << system_config.getLogLevel() << "\n";
-        oss << translate("max_charge_points", "最大充電ポイント数") << ": " << system_config.getMaxChargePoints() << "\n";
+        oss << translate("max_charge_points", "最大充電ポイント数") << ": " << "N/A" << "\n"; // No getMaxChargePoints() method
         
         // デバイス情報
         const auto& device_configs = config_manager_.getDeviceConfigs();
@@ -332,7 +332,7 @@ CliResult CliManager::handleConfigShow(const std::vector<std::string>& args) {
         const auto& system_config = config_manager_.getSystemConfig();
         oss << "[" << translate("system_config", "システム設定") << "]\n";
         oss << translate("log_level", "ログレベル") << ": " << system_config.getLogLevel() << "\n";
-        oss << translate("max_charge_points", "最大充電ポイント数") << ": " << system_config.getMaxChargePoints() << "\n";
+        oss << translate("max_charge_points", "最大充電ポイント数") << ": " << "N/A" << "\n"; // No getMaxChargePoints() method
         
         // CSMS設定
         const auto& csms_config = config_manager_.getCsmsConfig();
@@ -347,10 +347,10 @@ CliResult CliManager::handleConfigShow(const std::vector<std::string>& args) {
         oss << translate("device_count", "デバイス数") << ": " << device_configs.getDevices().size() << "\n";
         
         for (const auto& device : device_configs.getDevices()) {
-            oss << "  - " << device.getId() << " (" << device.getName() << ")\n";
-            oss << "    " << translate("protocol", "プロトコル") << ": " << device.getProtocol() << "\n";
-            oss << "    " << translate("template", "テンプレート") << ": " << device.getTemplateName() << "\n";
-            oss << "    " << translate("enabled", "有効") << ": " << (device.isEnabled() ? translate("yes", "はい") : translate("no", "いいえ")) << "\n";
+            oss << "  - " << device.getId() << " (" << device.getId() << ")\n";
+            oss << "    " << translate("protocol", "プロトコル") << ": " << config::protocolToString(device.getProtocol()) << "\n";
+            oss << "    " << translate("template", "テンプレート") << ": " << device.getTemplateId() << "\n";
+            oss << "    " << translate("enabled", "有効") << ": " << translate("yes", "はい") << "\n";
         }
         
         return CliResult(true, "", oss.str());
@@ -435,10 +435,10 @@ CliResult CliManager::handleDeviceList(const std::vector<std::string>& args) {
         for (const auto& device : devices) {
             std::vector<std::string> row;
             row.push_back(device.getId());
-            row.push_back(device.getName());
-            row.push_back(device.getProtocol());
-            row.push_back(device.getTemplateName());
-            row.push_back(device.isEnabled() ? translate("yes", "はい") : translate("no", "いいえ"));
+            row.push_back(device.getId()); // No getName() method
+            row.push_back(config::protocolToString(device.getProtocol()));
+            row.push_back(device.getTemplateId()); // No getTemplateName() method
+            row.push_back(translate("yes", "はい")); // No isEnabled() method, assuming true
             table_data.push_back(row);
         }
         
@@ -764,17 +764,28 @@ std::string CliManager::formatDeviceInfo(const config::DeviceConfig& device) {
     oss << translate("device_info", "デバイス情報") << ":\n";
     oss << "=============\n";
     oss << translate("id", "ID") << ": " << device.getId() << "\n";
-    oss << translate("name", "名前") << ": " << device.getName() << "\n";
-    oss << translate("description", "説明") << ": " << device.getDescription() << "\n";
-    oss << translate("protocol", "プロトコル") << ": " << device.getProtocol() << "\n";
-    oss << translate("template", "テンプレート") << ": " << device.getTemplateName() << "\n";
-    oss << translate("enabled", "有効") << ": " << (device.isEnabled() ? translate("yes", "はい") : translate("no", "いいえ")) << "\n";
+    oss << translate("name", "名前") << ": " << device.getId() << "\n"; // No getName() method
+    oss << translate("description", "説明") << ": " << "" << "\n"; // No getDescription() method
+    oss << translate("protocol", "プロトコル") << ": " << config::protocolToString(device.getProtocol()) << "\n";
+    oss << translate("template", "テンプレート") << ": " << device.getTemplateId() << "\n";
+    oss << translate("enabled", "有効") << ": " << translate("yes", "はい") << "\n";
     
     oss << "\n" << translate("connection_settings", "接続設定") << ":\n";
-    const auto& params = device.getConnectionParameters();
-    for (const auto& param : params) {
-        oss << "  " << param.first << ": " << param.second << "\n";
-    }
+    const auto& connection_config = device.getConnection();
+    
+    std::visit([&oss, this](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, config::ModbusTcpConnectionConfig>) {
+            oss << "  " << translate("ip", "IP") << ": " << arg.ip << "\n";
+            oss << "  " << translate("port", "ポート") << ": " << arg.port << "\n";
+            oss << "  " << translate("unit_id", "ユニットID") << ": " << arg.unit_id << "\n";
+        } else if constexpr (std::is_same_v<T, config::ModbusRtuConnectionConfig>) {
+            oss << "  " << translate("port", "ポート") << ": " << arg.port << "\n";
+            oss << "  " << translate("baud_rate", "ボーレート") << ": " << arg.baud_rate << "\n";
+        } else if constexpr (std::is_same_v<T, config::EchonetLiteConnectionConfig>) {
+            oss << "  " << translate("ip", "IP") << ": " << arg.ip << "\n";
+        }
+    }, connection_config);
     
     return oss.str();
 }

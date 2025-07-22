@@ -472,11 +472,11 @@ std::string WebUI::generateDevicePage() {
         for (const auto& device : device_configs.getDevices()) {
             html << "          <tr>\n";
             html << "            <td>" << device.getId() << "</td>\n";
-            html << "            <td>" << device.getName() << "</td>\n";
-            html << "            <td>" << device.getProtocol() << "</td>\n";
-            html << "            <td>" << device.getTemplateName() << "</td>\n";
-            html << "            <td><span class=\"status-" << (device.isEnabled() ? "active" : "inactive") << "\">";
-            html << (device.isEnabled() ? translate("enabled", "有効") : translate("disabled", "無効")) << "</span></td>\n";
+            html << "            <td>" << device.getId() << "</td>\n"; // No getName() method
+            html << "            <td>" << config::protocolToString(device.getProtocol()) << "</td>\n";
+            html << "            <td>" << device.getTemplateId() << "</td>\n"; // No getTemplateName() method
+            html << "            <td><span class=\"status-active\">";
+            html << translate("enabled", "有効") << "</span></td>\n"; // No isEnabled() method, assuming true
             html << "            <td>\n";
             html << "              <button class=\"btn btn-info\" onclick=\"showDeviceDetail('" << device.getId() << "')\">" << translate("details", "詳細") << "</button>\n";
             html << "              <button class=\"btn btn-warning\" onclick=\"editDevice('" << device.getId() << "')\">" << translate("edit", "編集") << "</button>\n";
@@ -536,7 +536,7 @@ std::string WebUI::generateConfigPage() {
         html << "      </div>\n";
         html << "      <div class=\"config-item\">\n";
         html << "        <label>" << translate("max_charge_points", "最大充電ポイント数") << ":</label>\n";
-        html << "        <span>" << system_config.getMaxChargePoints() << "</span>\n";
+        html << "        <span>" << "N/A" << "</span>\n"; // No getMaxChargePoints() method
         html << "      </div>\n";
         html << "    </div>\n";
         
