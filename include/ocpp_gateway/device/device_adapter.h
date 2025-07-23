@@ -185,6 +185,27 @@ struct RegisterAddress {
     
     // For multi-register values
     uint16_t count = 1;
+    
+    // Comparison operators for std::map
+    bool operator<(const RegisterAddress& other) const {
+        if (type != other.type) return type < other.type;
+        if (address != other.address) return address < other.address;
+        if (eoj_class_group_code != other.eoj_class_group_code) return eoj_class_group_code < other.eoj_class_group_code;
+        if (eoj_class_code != other.eoj_class_code) return eoj_class_code < other.eoj_class_code;
+        if (eoj_instance_code != other.eoj_instance_code) return eoj_instance_code < other.eoj_instance_code;
+        if (epc != other.epc) return epc < other.epc;
+        return count < other.count;
+    }
+    
+    bool operator==(const RegisterAddress& other) const {
+        return type == other.type &&
+               address == other.address &&
+               eoj_class_group_code == other.eoj_class_group_code &&
+               eoj_class_code == other.eoj_class_code &&
+               eoj_instance_code == other.eoj_instance_code &&
+               epc == other.epc &&
+               count == other.count;
+    }
 };
 
 /**

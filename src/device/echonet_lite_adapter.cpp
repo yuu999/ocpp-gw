@@ -7,6 +7,8 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <random>
+#include <iomanip>
+#include <sstream>
 
 namespace ocpp_gateway {
 namespace device {
@@ -35,10 +37,10 @@ constexpr uint8_t EOJ_NODE_PROFILE_INSTANCE = 0x01;
 constexpr uint8_t EPC_INSTANCE_LIST_NOTIFICATION = 0xD5;
 constexpr uint8_t EPC_SELF_NODE_INSTANCE_LIST_S = 0xD6;
 
-// ECHONET Lite EV charger classes (corrected based on ECHONET specification)
-constexpr uint8_t EOJ_EV_CHARGER_CLASS_GROUP = 0x02;  // 住宅・設備関連機器クラスグループ
-constexpr uint8_t EOJ_EV_CHARGER_CLASS = 0xA1;        // 電気自動車充電器クラス
-constexpr uint8_t EOJ_EV_DISCHARGER_CLASS = 0xA1;     // 電気自動車充電器クラス（充放電対応）
+// ECHONET Lite EV charger classes (already defined in header)
+// constexpr uint8_t EOJ_EV_CHARGER_CLASS_GROUP = 0x02;  // 住宅・設備関連機器クラスグループ
+// constexpr uint8_t EOJ_EV_CHARGER_CLASS = 0xA1;        // 電気自動車充電器クラス
+// constexpr uint8_t EOJ_EV_DISCHARGER_CLASS = 0xA1;     // 電気自動車充電器クラス（充放電対応）
 constexpr uint8_t EOJ_STORAGE_BATTERY_CLASS = 0x87;   // 蓄電池クラス
 constexpr uint8_t EOJ_PV_POWER_GENERATION_CLASS = 0x88; // 太陽光発電クラス
 
@@ -673,7 +675,7 @@ bool EchonetLiteAdapter::initializeSocket() {
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(ECHONET_PORT);
     
-    if (bind(socket_fd_, static_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
+    if (bind(socket_fd_, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr)) < 0) {
         LOG_ERROR("Failed to bind socket: {}", strerror(errno));
         close(socket_fd_);
         socket_fd_ = -1;
@@ -776,7 +778,7 @@ void EchonetLiteAdapter::receiverThreadFunc() {
         
         // Receive data
         ssize_t received = recvfrom(socket_fd_, buffer.data(), buffer.size(), 0,
-                                   static_cast<struct sockaddr*>(&sender_addr), &sender_addr_len);
+                                   reinterpret_cast<struct sockaddr*>(&sender_addr), &sender_addr_len);
         
         if (received < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -874,7 +876,7 @@ bool EchonetLiteAdapter::sendFrame(const std::string& device_id, const EchonetLi
     
     // Send data
     ssize_t sent = sendto(socket_fd_, data.data(), data.size(), 0,
-                         static_cast<struct sockaddr*>(&dest_addr), sizeof(dest_addr));
+                         reinterpret_cast<struct sockaddr*>(&dest_addr), sizeof(dest_addr));
     
     if (sent < 0) {
         LOG_ERROR("Failed to send frame to {}: {}", echonet_address->ip_address, strerror(errno));
@@ -910,7 +912,7 @@ bool EchonetLiteAdapter::sendMulticastFrame(const EchonetLiteFrame& frame) {
     
     // Send data
     ssize_t sent = sendto(multicast_socket_fd_, data.data(), data.size(), 0,
-                         static_cast<struct sockaddr*>(&dest_addr), sizeof(dest_addr));
+                         reinterpret_cast<struct sockaddr*>(&dest_addr), sizeof(dest_addr));
     
     if (sent < 0) {
         LOG_ERROR("Failed to send multicast frame: {}", strerror(errno));

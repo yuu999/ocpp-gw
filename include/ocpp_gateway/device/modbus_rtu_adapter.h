@@ -207,7 +207,7 @@ private:
     
     // Error handling
     ReadResult handleModbusError(const std::string& operation, int error_code);
-    WriteResult handleModbusError(const std::string& operation, int error_code);
+    WriteResult handleModbusWriteError(const std::string& operation, int error_code);
     
     // Device status monitoring
     void startDeviceStatusMonitoring();

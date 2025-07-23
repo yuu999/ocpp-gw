@@ -12,26 +12,27 @@ namespace ocpp_gateway {
 namespace device {
 
 // Modbus function codes
-constexpr int MODBUS_FC_READ_COILS = 0x01;
-constexpr int MODBUS_FC_READ_DISCRETE_INPUTS = 0x02;
-constexpr int MODBUS_FC_READ_HOLDING_REGISTERS = 0x03;
-constexpr int MODBUS_FC_READ_INPUT_REGISTERS = 0x04;
-constexpr int MODBUS_FC_WRITE_SINGLE_COIL = 0x05;
-constexpr int MODBUS_FC_WRITE_SINGLE_REGISTER = 0x06;
-constexpr int MODBUS_FC_WRITE_MULTIPLE_COILS = 0x0F;
-constexpr int MODBUS_FC_WRITE_MULTIPLE_REGISTERS = 0x10;
+// Duplicate constant definitions removed (they already exist in modbus.h)
+// static const int MODBUS_FC_READ_COILS = 0x01;
+// static const int MODBUS_FC_READ_DISCRETE_INPUTS = 0x02;
+// static const int MODBUS_FC_READ_HOLDING_REGISTERS = 0x03;
+// static const int MODBUS_FC_READ_INPUT_REGISTERS = 0x04;
+// static const int MODBUS_FC_WRITE_SINGLE_COIL = 0x05;
+// static const int MODBUS_FC_WRITE_SINGLE_REGISTER = 0x06;
+// static const int MODBUS_FC_WRITE_MULTIPLE_COILS = 0x0F;
+// static const int MODBUS_FC_WRITE_MULTIPLE_REGISTERS = 0x10;
 
 // Modbus register limits
-constexpr int MODBUS_MAX_READ_BITS = 2000;
-constexpr int MODBUS_MAX_WRITE_BITS = 1968;
-constexpr int MODBUS_MAX_READ_REGISTERS = 125;
-constexpr int MODBUS_MAX_WRITE_REGISTERS = 123;
+// static const int MODBUS_MAX_READ_BITS = 2000;
+// static const int MODBUS_MAX_WRITE_BITS = 1968;
+// static const int MODBUS_MAX_READ_REGISTERS = 125;
+// static const int MODBUS_MAX_WRITE_REGISTERS = 123;
 
 // Modbus timeout in milliseconds
-constexpr int MODBUS_TIMEOUT_MS = 1000;
+static const int MODBUS_TIMEOUT_MS = 1000;
 
 // Status monitoring interval in milliseconds
-constexpr int STATUS_MONITOR_INTERVAL_MS = 30000;
+static const int STATUS_MONITOR_INTERVAL_MS = 30000;
 
 // Helper function to convert parity string to modbus parity char
 char parityToModbusChar(const std::string& parity) {
@@ -704,10 +705,7 @@ std::shared_ptr<ModbusRtuAdapter::ModbusConnection> ModbusRtuAdapter::createConn
     }
     
     // Set response timeout
-    struct timeval timeout;
-    timeout.tv_sec = MODBUS_TIMEOUT_MS / 1000;
-    timeout.tv_usec = (MODBUS_TIMEOUT_MS % 1000) * 1000;
-    modbus_set_response_timeout(connection->ctx, &timeout);
+    modbus_set_response_timeout(connection->ctx, MODBUS_TIMEOUT_MS / 1000, (MODBUS_TIMEOUT_MS % 1000) * 1000);
     
     // Connect to the device
     if (modbus_connect(connection->ctx) == -1) {
@@ -848,10 +846,7 @@ void ModbusRtuAdapter::discoveryThreadFunc() {
                 }
                 
                 // Set response timeout (shorter for discovery)
-                struct timeval timeout;
-                timeout.tv_sec = 0;
-                timeout.tv_usec = 500000; // 500ms
-                modbus_set_response_timeout(ctx, &timeout);
+                modbus_set_response_timeout(ctx, 0, 500000); // 500ms
                 
                 // Try to connect
                 if (modbus_connect(ctx) == -1) {
@@ -1000,7 +995,7 @@ WriteResult ModbusRtuAdapter::writeCoil(std::shared_ptr<ModbusConnection> connec
     }
     
     if (rc == -1) {
-        return handleModbusError("write coil", errno);
+        return handleModbusWriteError("write coil", errno);
     }
     
     return createSuccessWriteResult();
@@ -1026,7 +1021,7 @@ WriteResult ModbusRtuAdapter::writeHoldingRegister(std::shared_ptr<ModbusConnect
     }
     
     if (rc == -1) {
-        return handleModbusError("write holding register", errno);
+        return handleModbusWriteError("write holding register", errno);
     }
     
     return createSuccessWriteResult();
@@ -1288,7 +1283,7 @@ ReadResult ModbusRtuAdapter::handleModbusError(const std::string& operation, int
     return createErrorReadResult(error_message, error_code);
 }
 
-WriteResult ModbusRtuAdapter::handleModbusError(const std::string& operation, int error_code) {
+WriteResult ModbusRtuAdapter::handleModbusWriteError(const std::string& operation, int error_code) {
     std::string error_message = "Failed to " + operation + ": " + modbus_strerror(error_code);
     LOG_ERROR(error_message);
     return createErrorWriteResult(error_message, error_code);

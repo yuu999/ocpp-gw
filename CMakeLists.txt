@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(ocpp-gateway VERSION 1.0.0 LANGUAGES CXX)
 
 # CMakeポリシーの設定
-cmake_policy(SET CMP0167 NEW)
+# cmake_policy(SET CMP0167 NEW)  # CMake 3.27以降で利用可能
 
 # C++17を使用
 set(CMAKE_CXX_STANDARD 17)
@@ -33,11 +33,8 @@ find_package(OpenSSL REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 # jsoncpp
-# pkg_check_modules(JSONCPP jsoncpp)  # Windows環境では無効化
-# if(NOT JSONCPP_FOUND)
-#     find_package(PkgConfig REQUIRED)
-#     pkg_check_modules(JSONCPP REQUIRED jsoncpp)
-# endif()
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 
 # libmodbus
 # pkg_check_modules(LIBMODBUS REQUIRED libmodbus)  # Windows環境では無効化
