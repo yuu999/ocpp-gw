@@ -68,84 +68,13 @@ std::string CliManager::getCurrentLanguage() const {
 }
 
 CliResult CliManager::handleLanguage(const std::vector<std::string>& args) {
-    // If no arguments, show current language and available languages
-    if (args.size() == 1) {
-        std::ostringstream oss;
-        std::string current_lang = getCurrentLanguage();
-        std::vector<std::string> available_langs = common::LanguageManager::getInstance().getAvailableLanguages();
-        
-        oss << translate("current_language", "現在の言語") << ": ";
-        if (current_lang == "en") {
-            oss << translate("english", "英語") << " (English)\n";
-        } else if (current_lang == "ja") {
-            oss << translate("japanese", "日本語") << " (Japanese)\n";
-        } else {
-            oss << current_lang << "\n";
-        }
-        
-        oss << "\n" << translate("available_languages", "利用可能な言語") << ":\n";
-        for (const auto& lang : available_langs) {
-            oss << "- ";
-            if (lang == "en") {
-                oss << "English (" << translate("english", "英語") << ")";
-            } else if (lang == "ja") {
-                oss << "Japanese (" << translate("japanese", "日本語") << ")";
-            } else {
-                oss << lang;
-            }
-            
-            if (lang == current_lang) {
-                oss << " [" << translate("current", "現在") << "]";
-            }
-            oss << "\n";
-        }
-        
-        oss << "\n" << translate("language_usage", "使用法: language <set|list>") << "\n";
-        oss << "  set <lang>  - " << translate("language_set_desc", "言語を設定 (例: en, ja)") << "\n";
-        oss << "  list        - " << translate("language_list_desc", "利用可能な言語を一覧表示") << "\n";
-        
-        return CliResult(true, "", oss.str());
+    if (args.size() < 2) {
+        return CliResult(false, translate("lang_usage", "使用法: language <lang_code>"));
     }
-    
-    // Handle subcommands
-    std::string subcommand = args[1];
-    
-    if (subcommand == "set") {
-        if (args.size() < 3) {
-            return CliResult(false, translate("language_set_usage", "使用法: language set <lang>"));
-        }
-        
-        std::string lang = args[2];
-        if (setLanguage(lang)) {
-            return CliResult(true, translate("language_set_success", "言語を設定しました: ") + lang);
-        } else {
-            return CliResult(false, translate("language_set_error", "言語の設定に失敗しました: ") + lang);
-        }
-    } else if (subcommand == "list") {
-        std::ostringstream oss;
-        std::vector<std::string> available_langs = common::LanguageManager::getInstance().getAvailableLanguages();
-        
-        oss << translate("available_languages", "利用可能な言語") << ":\n";
-        for (const auto& lang : available_langs) {
-            oss << "- ";
-            if (lang == "en") {
-                oss << "English (" << translate("english", "英語") << ")";
-            } else if (lang == "ja") {
-                oss << "Japanese (" << translate("japanese", "日本語") << ")";
-            } else {
-                oss << lang;
-            }
-            
-            if (lang == getCurrentLanguage()) {
-                oss << " [" << translate("current", "現在") << "]";
-            }
-            oss << "\n";
-        }
-        
-        return CliResult(true, "", oss.str());
-    } else {
-        return CliResult(false, translate("unknown_subcommand", "不明なサブコマンドです: ") + subcommand);
+    if (setLanguage(args[1])) {
+        return CliResult(true, translate("lang_success", "言語が正常に設定されました。"));
     }
+    return CliResult(false, translate("lang_fail", "言語の設定に失敗しました。"));
 }
 
 CliResult CliManager::executeCommand(const std::vector<std::string>& args) {
@@ -271,7 +200,7 @@ CliResult CliManager::handleStatus(const std::vector<std::string>& args) {
         
         // システム設定情報
         const auto& system_config = config_manager_.getSystemConfig();
-        oss << translate("log_level", "ログレベル") << ": " << system_config.getLogLevel() << "\n";
+        oss << translate("log_level", "ログレベル") << ": " << logLevelToString(system_config.getLogLevel()) << "\n";
         oss << translate("max_charge_points", "最大充電ポイント数") << ": " << "N/A" << "\n"; // No getMaxChargePoints() method
         
         // デバイス情報
@@ -333,10 +262,11 @@ CliResult CliManager::handleConfigShow(const std::vector<std::string>& args) {
         
         // システム設定
         const auto& system_config = config_manager_.getSystemConfig();
-        oss << "[" << translate("system_config", "システム設定") << "]\n";
-        oss << translate("log_level", "ログレベル") << ": " << system_config.getLogLevel() << "\n";
-        oss << translate("max_charge_points", "最大充電ポイント数") << ": " << "N/A" << "\n"; // No getMaxChargePoints() method
-        
+        oss << "--- System Config ---\n";
+        oss << translate("log_level", "ログレベル") << ": " << logLevelToString(system_config.getLogLevel()) << "\n";
+        oss << translate("language", "言語") << ": " << system_config.getLanguage() << "\n";
+        oss << "\n";
+
         // CSMS設定
         const auto& csms_config = config_manager_.getCsmsConfig();
         oss << "\n[" << translate("csms_config", "CSMS設定") << "]\n";
