@@ -44,16 +44,10 @@ CliManager::CliManager() : config_manager_(config::ConfigManager::getInstance())
     registerCommand("health", translate("cmd_health_desc", "ヘルスチェック"),
                    [this](const std::vector<std::string>& args) { return handleHealth(args); });
     
-    registerCommand("log", translate("cmd_log_desc", "ログ管理コマンド"),
-                   [this](const std::vector<std::string>& args) { return handleLog(args); });
-                   
-    // Add language command for internationalization
-    registerCommand("language", translate("cmd_language_desc", "言語設定コマンド"),
-                   [this](const std::vector<std::string>& args) { return handleLanguage(args); });
+    registerCommand("log",          translate("cmd_log_desc", "ログ関連コマンド"),           [this](const std::vector<std::string>& args) { return handleLog(args); });
 }
 
-CliManager::~CliManager() {
-}
+CliManager::~CliManager() = default;
 
 std::string CliManager::translate(const std::string& key, const std::string& default_value) const {
     return common::LanguageManager::getInstance().translate(key, default_value);
@@ -67,19 +61,9 @@ std::string CliManager::getCurrentLanguage() const {
     return common::LanguageManager::getInstance().getCurrentLanguage();
 }
 
-CliResult CliManager::handleLanguage(const std::vector<std::string>& args) {
-    if (args.size() < 2) {
-        return CliResult(false, translate("lang_usage", "使用法: language <lang_code>"));
-    }
-    if (setLanguage(args[1])) {
-        return CliResult(true, translate("lang_success", "言語が正常に設定されました。"));
-    }
-    return CliResult(false, translate("lang_fail", "言語の設定に失敗しました。"));
-}
-
 CliResult CliManager::executeCommand(const std::vector<std::string>& args) {
     if (args.empty()) {
-        return CliResult(false, translate("no_command", "コマンドが指定されていません。'help'でヘルプを確認してください。"));
+        return CliResult(false, translate("no_command", "コマンドが指定されていません。"));
     }
 
     std::string command = args[0];
@@ -264,7 +248,6 @@ CliResult CliManager::handleConfigShow(const std::vector<std::string>& args) {
         const auto& system_config = config_manager_.getSystemConfig();
         oss << "--- System Config ---\n";
         oss << translate("log_level", "ログレベル") << ": " << logLevelToString(system_config.getLogLevel()) << "\n";
-        oss << translate("language", "言語") << ": " << system_config.getLanguage() << "\n";
         oss << "\n";
 
         // CSMS設定

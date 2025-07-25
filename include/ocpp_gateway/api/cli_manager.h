@@ -80,7 +80,6 @@ private:
     CliResult handleMetrics(const std::vector<std::string>& args);
     CliResult handleHealth(const std::vector<std::string>& args);
     CliResult handleLog(const std::vector<std::string>& args);
-    CliResult handleLanguage(const std::vector<std::string>& args);
 
     // 設定管理コマンド
     CliResult handleConfigShow(const std::vector<std::string>& args);
