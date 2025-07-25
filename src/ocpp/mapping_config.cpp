@@ -9,11 +9,11 @@
 #include <set>
 #include <mutex>
 
-namespace ocpp_gateway {
-namespace ocpp {
-
 namespace fs = std::filesystem;
 using json = nlohmann::json;
+
+using namespace ocpp_gateway::ocpp;
+using namespace ocpp_gateway;
 
 // ModbusVariableMapping implementation
 bool ModbusVariableMapping::validate() const {
@@ -43,8 +43,7 @@ bool ModbusVariableMapping::validate() const {
     
     return true;
 }
-// Echone
-tLiteVariableMapping implementation
+// EchonetLiteVariableMapping implementation
 bool EchonetLiteVariableMapping::validate() const {
     if (epc < 0 || epc > 255) {
         throw config::ConfigValidationError("ECHONET Lite EPC must be between 0 and 255");
@@ -99,8 +98,9 @@ bool OcppVariable::validate() const {
     }
     
     return true;
-}// M
-appingTemplate implementation
+}
+
+// MappingTemplate implementation
 MappingTemplate::MappingTemplate()
     : id_(""),
       description_(""),
@@ -415,8 +415,7 @@ bool MappingTemplate::loadFromYamlString(const std::string& yaml_content) {
         throw config::ConfigValidationError(std::string("Error loading mapping template: ") + e.what());
     }
 }
-bool Mapp
-ingTemplate::loadFromJson(const std::string& json_file) {
+bool MappingTemplate::loadFromJson(const std::string& json_file) {
     try {
         std::ifstream file(json_file);
         if (!file.is_open()) {
@@ -700,8 +699,8 @@ bool MappingTemplate::loadFromJsonString(const std::string& json_content) {
     } catch (const std::exception& e) {
         throw config::ConfigValidationError(std::string("Error loading mapping template: ") + e.what());
     }
-}bo
-ol MappingTemplate::saveToYaml(const std::string& yaml_file) const {
+}
+bool MappingTemplate::saveToYaml(const std::string& yaml_file) const {
     try {
         YAML::Node root;
         YAML::Node template_node;
@@ -1012,9 +1011,14 @@ std::optional<OcppVariable> MappingTemplate::getVariable(const std::string& ocpp
     }
     
     return std::nullopt;
-}//
- MappingTemplateCollection implementation
+}
+
+// MappingTemplateCollection implementation
 MappingTemplateCollection::MappingTemplateCollection() {
+}
+
+MappingTemplateCollection::~MappingTemplateCollection() {
+    disableHotReload();
 }
 
 bool MappingTemplateCollection::loadFromDirectory(const std::string& directory) {
@@ -1075,30 +1079,12 @@ bool MappingTemplateCollection::loadFromFile(const std::string& file_path) {
     } catch (const std::exception& e) {
         throw config::ConfigValidationError(std::string("Error loading mapping template from file: ") + e.what());
     }
-}bo
-ol MappingTemplateCollection::saveToDirectory(const std::string& directory) const {
-    try {
-        // Create directory if it doesn't exist
-        fs::create_directories(directory);
-        
-        // Save each template to a separate file
-        for (const auto& template_obj : templates_) {
-            std::string file_path = directory + "/" + template_obj.getId() + ".yaml";
-            template_obj.saveToYaml(file_path);
-        }
-        
-        return true;
-    } catch (const config::ConfigValidationError& e) {
-        throw;
-    } catch (const std::exception& e) {
-        throw config::ConfigValidationError(std::string("Error saving mapping templates to directory: ") + e.what());
-    }
 }
 
-bool MappingTemplateCollection::validate() const {
+void MappingTemplateCollection::validate() {
     try {
         // Validate each template
-        for (const auto& template_obj : templates_) {
+        for (auto& template_obj : templates_) {
             template_obj.validate();
         }
         
@@ -1111,7 +1097,6 @@ bool MappingTemplateCollection::validate() const {
             template_ids.insert(template_obj.getId());
         }
         
-        return true;
     } catch (const config::ConfigValidationError& e) {
         throw;
     } catch (const std::exception& e) {
@@ -1119,7 +1104,7 @@ bool MappingTemplateCollection::validate() const {
     }
 }
 
-bool MappingTemplateCollection::resolveInheritance() {
+void MappingTemplateCollection::resolveInheritance() {
     try {
         // Check for circular dependencies
         std::map<std::string, std::set<std::string>> dependency_graph;
@@ -1173,14 +1158,14 @@ bool MappingTemplateCollection::resolveInheritance() {
             for (auto& template_obj : templates_) {
                 if (template_obj.hasParent()) {
                     std::string parent_id = template_obj.getParentId().value();
-                    auto parent = getTemplate(parent_id);
+                    auto parent = findTemplate(parent_id);
                     
                     if (!parent) {
                         throw config::ConfigValidationError("Parent template not found: " + parent_id);
                     }
                     
                     // Apply parent template
-                    template_obj.applyParent(parent.value());
+                    template_obj.applyParent(*parent);
                     
                     // Clear parent reference after applying
                     template_obj.setParentId(std::nullopt);
@@ -1189,14 +1174,14 @@ bool MappingTemplateCollection::resolveInheritance() {
             }
         } while (changes_made);
         
-        return true;
     } catch (const config::ConfigValidationError& e) {
         throw;
     } catch (const std::exception& e) {
         throw config::ConfigValidationError(std::string("Error resolving template inheritance: ") + e.what());
     }
-}void Ma
-ppingTemplateCollection::addTemplate(const MappingTemplate& template_obj) {
+}
+
+void MappingTemplateCollection::addTemplate(const MappingTemplate& template_obj) {
     // Check if template already exists
     for (auto it = templates_.begin(); it != templates_.end(); ++it) {
         if (it->getId() == template_obj.getId()) {
@@ -1210,89 +1195,55 @@ ppingTemplateCollection::addTemplate(const MappingTemplate& template_obj) {
     templates_.push_back(template_obj);
 }
 
-bool MappingTemplateCollection::removeTemplate(const std::string& id) {
-    for (auto it = templates_.begin(); it != templates_.end(); ++it) {
-        if (it->getId() == id) {
-            templates_.erase(it);
-            return true;
+const MappingTemplate* MappingTemplateCollection::findTemplate(const std::string& name) const {
+    for (const auto& t : templates_) {
+        if (t.getId() == name) {
+            return &t;
         }
     }
-    
-    return false;
+    return nullptr;
 }
 
-std::optional<MappingTemplate> MappingTemplateCollection::getTemplate(const std::string& id) const {
-    for (const auto& template_obj : templates_) {
-        if (template_obj.getId() == id) {
-            return template_obj;
-        }
-    }
-    
-    return std::nullopt;
-}
-
-} // namespace ocpp
-} // namespace ocpp_gateway
-
-// MappingTemplateCollection implementation for hot reload functionality
-MappingTemplateCollection::~MappingTemplateCollection() {
-    disableHotReload();
+void MappingTemplateCollection::clear() {
+    templates_.clear();
+    template_name_to_idx_.clear();
+    inheritance_graph_.clear();
 }
 
 bool MappingTemplateCollection::enableHotReload(const std::string& directory, TemplateChangeCallback callback) {
     if (hot_reload_enabled_) {
-        // Already enabled, disable first
         disableHotReload();
     }
 
     if (!fs::exists(directory) || !fs::is_directory(directory)) {
-        LOG_ERROR("Cannot enable hot reload: directory {} does not exist", directory);
+        LOG_ERROR("Directory does not exist or is not a directory: {}", directory);
         return false;
     }
 
     try {
         watched_directory_ = directory;
         file_watcher_ = std::make_shared<common::FileWatcher>();
-        
+
         if (callback) {
             registerChangeCallback(callback);
         }
 
-        // Add directory watch for YAML and JSON files
-        bool yaml_watch = file_watcher_->addDirectoryWatch(
-            directory,
+        file_watcher_->addDirectoryWatch(watched_directory_, 
             [this](const std::string& file_path) {
                 this->handleFileChange(file_path);
-            },
-            ".yaml",
-            false
-        );
+            }, ".json", true);
 
-        bool json_watch = file_watcher_->addDirectoryWatch(
-            directory,
-            [this](const std::string& file_path) {
-                this->handleFileChange(file_path);
-            },
-            ".json",
-            false
-        );
-
-        if (!yaml_watch && !json_watch) {
-            LOG_ERROR("Failed to set up directory watches for hot reload");
-            file_watcher_.reset();
-            return false;
-        }
-
-        // Start the file watcher
         file_watcher_->start();
         hot_reload_enabled_ = true;
-        LOG_INFO("Hot reload enabled for directory: {}", directory);
-        return true;
+        LOG_INFO("Hot reload enabled for directory: {}", watched_directory_);
+
     } catch (const std::exception& e) {
-        LOG_ERROR("Error enabling hot reload: {}", e.what());
-        file_watcher_.reset();
+        LOG_ERROR("Failed to enable hot reload: {}", e.what());
+        disableHotReload();
         return false;
     }
+
+    return true;
 }
 
 void MappingTemplateCollection::disableHotReload() {
@@ -1304,10 +1255,10 @@ void MappingTemplateCollection::disableHotReload() {
         file_watcher_->stop();
         file_watcher_.reset();
     }
-
+    
     hot_reload_enabled_ = false;
     watched_directory_.clear();
-    LOG_INFO("Hot reload disabled");
+    LOG_INFO("Hot reload disabled.");
 }
 
 void MappingTemplateCollection::registerChangeCallback(TemplateChangeCallback callback) {
@@ -1323,120 +1274,54 @@ void MappingTemplateCollection::clearChangeCallbacks() {
 }
 
 void MappingTemplateCollection::handleFileChange(const std::string& file_path) {
-    LOG_INFO("Detected change in configuration file: {}", file_path);
-    
-    try {
-        // Create a copy of the current templates for atomic update
-        std::vector<MappingTemplate> old_templates = templates_;
-        
-        // Try to load the changed file
-        if (!loadFromFile(file_path)) {
-            LOG_ERROR("Failed to load changed file: {}", file_path);
-            return;
-        }
-        
-        // Validate the templates
-        try {
-            validate();
-        } catch (const config::ConfigValidationError& e) {
-            LOG_ERROR("Validation failed for changed file {}: {}", file_path, e.what());
-            // Restore old templates
-            templates_ = old_templates;
-            return;
-        }
-        
-        // Try to resolve inheritance
-        try {
-            resolveInheritance();
-        } catch (const config::ConfigValidationError& e) {
-            LOG_ERROR("Inheritance resolution failed for changed file {}: {}", file_path, e.what());
-            // Restore old templates
-            templates_ = old_templates;
-            return;
-        }
-        
-        LOG_INFO("Successfully reloaded configuration from file: {}", file_path);
-        
-        // Notify callbacks
-        std::vector<TemplateChangeCallback> callbacks;
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            callbacks = change_callbacks_;
-        }
-        
-        for (const auto& callback : callbacks) {
-            try {
-                callback(file_path);
-            } catch (const std::exception& e) {
-                LOG_ERROR("Error in template change callback: {}", e.what());
-            }
-        }
-    } catch (const std::exception& e) {
-        LOG_ERROR("Error handling file change for {}: {}", file_path, e.what());
+    LOG_INFO("File change detected: {}", file_path);
+    if (reloadTemplates()) {
+        LOG_INFO("Templates reloaded successfully after file change.");
+    } else {
+        LOG_ERROR("Failed to reload templates after file change.");
     }
 }
 
 bool MappingTemplateCollection::reloadTemplates() {
     if (watched_directory_.empty()) {
-        LOG_ERROR("Cannot reload templates: no watched directory set");
+        LOG_WARN("Cannot reload templates: no directory is being watched.");
         return false;
     }
+
+    LOG_INFO("Attempting to reload templates from: {}", watched_directory_);
     
     try {
-        // Create a copy of the current templates for atomic update
         std::vector<MappingTemplate> old_templates = templates_;
-        
-        // Clear current templates
-        templates_.clear();
-        
-        // Load templates from directory
+        clear();
         if (!loadFromDirectory(watched_directory_)) {
-            LOG_ERROR("Failed to reload templates from directory: {}", watched_directory_);
-            // Restore old templates
-            templates_ = old_templates;
+            LOG_ERROR("Failed to load templates from directory during reload: {}", watched_directory_);
+            templates_ = old_templates; // Restore old templates
             return false;
         }
-        
-        // Validate the templates
-        try {
-            validate();
-        } catch (const config::ConfigValidationError& e) {
-            LOG_ERROR("Validation failed for reloaded templates: {}", e.what());
-            // Restore old templates
-            templates_ = old_templates;
-            return false;
-        }
-        
-        // Try to resolve inheritance
-        try {
-            resolveInheritance();
-        } catch (const config::ConfigValidationError& e) {
-            LOG_ERROR("Inheritance resolution failed for reloaded templates: {}", e.what());
-            // Restore old templates
-            templates_ = old_templates;
-            return false;
-        }
-        
-        LOG_INFO("Successfully reloaded all templates from directory: {}", watched_directory_);
-        
-        // Notify callbacks
-        std::vector<TemplateChangeCallback> callbacks;
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            callbacks = change_callbacks_;
-        }
-        
-        for (const auto& callback : callbacks) {
-            try {
-                callback(watched_directory_);
-            } catch (const std::exception& e) {
-                LOG_ERROR("Error in template change callback: {}", e.what());
-            }
-        }
-        
-        return true;
+
+        validate();
+        resolveInheritance();
+
+    } catch (const config::ConfigValidationError& e) {
+        LOG_ERROR("Validation or inheritance resolution failed during reload: {}", e.what());
+        // Here we might want to restore the old configuration
+        return false;
     } catch (const std::exception& e) {
-        LOG_ERROR("Error reloading templates: {}", e.what());
+        LOG_ERROR("An unexpected error occurred during reload: {}", e.what());
         return false;
     }
+
+    LOG_INFO("Successfully reloaded all templates from directory: {}", watched_directory_);
+
+    std::vector<TemplateChangeCallback> callbacks;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        callbacks = change_callbacks_;
+    }
+
+    for (const auto& callback : callbacks) {
+        callback(watched_directory_);
+    }
+
+    return true;
 }

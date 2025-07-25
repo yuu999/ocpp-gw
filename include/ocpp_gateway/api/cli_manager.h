@@ -20,6 +20,7 @@ struct CliResult {
     
     CliResult() : success(true) {}
     CliResult(bool s, const std::string& m) : success(s), message(m) {}
+    CliResult(bool s, const std::string& m, const std::string& o) : success(s), message(m), output(o) {}
 };
 
 /**

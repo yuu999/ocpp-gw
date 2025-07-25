@@ -281,10 +281,9 @@ HttpResponse AdminApi::createJsonResponse(int status_code, const std::string& da
 
 HttpResponse AdminApi::createErrorResponse(int status_code, const std::string& message) {
     Json::Value error;
-    error["error"] = true;
+    error["status"] = "error";
     error["message"] = message;
-    error["status_code"] = status_code;
-    error["timestamp"] = std::time(nullptr);
+    error["timestamp"] = static_cast<Json::Value::Int64>(std::time(nullptr));
 
     Json::StreamWriterBuilder builder;
     builder["indentation"] = "  ";
@@ -300,7 +299,12 @@ HttpResponse AdminApi::handleGetSystemInfo([[maybe_unused]] const HttpRequest& r
         info["version"] = "1.0.0";
         info["build_date"] = __DATE__;
         info["build_time"] = __TIME__;
-        info["uptime_seconds"] = std::time(nullptr) - start_time_;
+        // Calculate uptime
+        if (start_time_ > 0) {
+            info["uptime_seconds"] = static_cast<Json::Value::Int64>(std::time(nullptr) - start_time_);
+        } else {
+            info["uptime_seconds"] = 0;
+        }
         
         const auto& system_config = config_manager_.getSystemConfig();
         info["log_level"] = config::logLevelToString(system_config.getLogLevel());
@@ -431,9 +435,9 @@ HttpResponse AdminApi::handleReloadConfig([[maybe_unused]] const HttpRequest& re
     try {
         if (config_manager_.reloadAllConfigs()) {
             Json::Value response;
-            response["success"] = true;
+            response["status"] = "success";
             response["message"] = "設定を再読み込みしました";
-            response["timestamp"] = std::time(nullptr);
+            response["timestamp"] = static_cast<Json::Value::Int64>(std::time(nullptr));
 
             Json::StreamWriterBuilder builder;
             builder["indentation"] = "  ";
@@ -483,10 +487,12 @@ HttpResponse AdminApi::handleGetMetrics(const HttpRequest& request) {
 
 HttpResponse AdminApi::handleGetHealth([[maybe_unused]] const HttpRequest& request) {
     Json::Value health;
-    health["status"] = "healthy";
-    health["timestamp"] = std::time(nullptr);
-    health["uptime_seconds"] = std::time(nullptr) - start_time_;
-    health["running"] = running_.load();
+    health["status"] = "ok";
+    health["timestamp"] = static_cast<Json::Value::Int64>(std::time(nullptr));
+    health["uptime_seconds"] = static_cast<Json::Value::Int64>(std::time(nullptr) - start_time_);
+
+    // Check OCPP server status (placeholder)
+    Json::Value ocpp_server;
 
     Json::StreamWriterBuilder builder;
     builder["indentation"] = "  ";

@@ -167,10 +167,8 @@ private:
     /**
      * @brief Handle TCP connection
      * @param ec Error code
-     * @param endpoint Connected endpoint
      */
-    void onConnect(const boost::system::error_code& ec, 
-                  const boost::asio::ip::tcp::endpoint& endpoint);
+    void onConnect(const boost::system::error_code& ec);
     
     /**
      * @brief Handle SSL handshake

@@ -184,21 +184,20 @@ void WebSocketClient::onResolve(
     
     // Connect to the IP address we get from a lookup
     beast::get_lowest_layer(*ws_).async_connect(
-        results,
+        results.begin()->endpoint(),
         std::bind(&WebSocketClient::onConnect, shared_from_this(),
-                 std::placeholders::_1, std::placeholders::_2));
+                 std::placeholders::_1));
 }
 
 void WebSocketClient::onConnect(
-    const boost::system::error_code& ec,
-    const tcp::endpoint& endpoint) {
+    const boost::system::error_code& ec) {
     
     if (ec) {
         handleError("TCP connection failed", ec);
         return;
     }
     
-    LOG_DEBUG("TCP connected to {}:{}", endpoint.address().to_string(), endpoint.port());
+    LOG_DEBUG("TCP connected successfully");
     
     // Perform SSL handshake
     ws_->next_layer().async_handshake(
@@ -262,8 +261,8 @@ void WebSocketClient::onConnectTimeout(const boost::system::error_code& ec) {
         
         // Close any pending connection
         try {
-            if (ws_ && beast::get_lowest_layer(*ws_).socket().is_open()) {
-                beast::get_lowest_layer(*ws_).socket().close();
+            if (ws_ && beast::get_lowest_layer(*ws_).is_open()) {
+                beast::get_lowest_layer(*ws_).close();
             }
         } catch (const std::exception& e) {
             LOG_ERROR("Error closing socket on timeout: {}", e.what());

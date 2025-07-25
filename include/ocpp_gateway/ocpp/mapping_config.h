@@ -7,8 +7,15 @@
 #include <memory>
 #include <optional>
 #include <variant>
+#include <functional>
+#include <mutex>
+
+#include <nlohmann/json.hpp>
 
 namespace ocpp_gateway {
+namespace common {
+class FileWatcher;
+}
 namespace ocpp {
 
 /**
@@ -264,157 +271,39 @@ using TemplateChangeCallback = std::function<void(const std::string&)>;
  */
 class MappingTemplateCollection {
 public:
-    /**
-     * @brief Construct a new Mapping Template Collection object
-     */
-    MappingTemplateCollection();
+    using TemplateChangeCallback = std::function<void(const std::string&)>;
 
-    /**
-     * @brief Destroy the Mapping Template Collection object
-     */
+    MappingTemplateCollection();
     ~MappingTemplateCollection();
 
-    /**
-     * @brief Load mapping templates from directory
-     * 
-     * @param directory Directory containing mapping template files
-     * @return true if loading was successful
-     * @return false if loading failed
-     */
-    bool loadFromDirectory(const std::string& directory);
-
-    /**
-     * @brief Load a mapping template from file
-     * 
-     * @param file_path Path to mapping template file
-     * @return true if loading was successful
-     * @return false if loading failed
-     */
-    bool loadFromFile(const std::string& file_path);
-
-    /**
-     * @brief Save all mapping templates to directory
-     * 
-     * @param directory Directory to save mapping templates
-     * @return true if saving was successful
-     * @return false if saving failed
-     */
-    bool saveToDirectory(const std::string& directory) const;
-
-    /**
-     * @brief Validate all mapping templates
-     * 
-     * @return true if all templates are valid
-     * @throws config::ConfigValidationError if any template is invalid
-     */
-    bool validate() const;
-
-    /**
-     * @brief Resolve template inheritance
-     * 
-     * This method resolves template inheritance by applying parent templates to child templates.
-     * It throws an exception if there are circular dependencies or missing parent templates.
-     * 
-     * @return true if inheritance resolution was successful
-     * @throws config::ConfigValidationError if inheritance resolution failed
-     */
-    bool resolveInheritance();
-
-    /**
-     * @brief Add a mapping template
-     * 
-     * @param template_obj Mapping template
-     */
     void addTemplate(const MappingTemplate& template_obj);
+    const MappingTemplate* findTemplate(const std::string& name) const;
 
-    /**
-     * @brief Remove a mapping template by ID
-     * 
-     * @param id Template ID
-     * @return true if template was removed
-     * @return false if template was not found
-     */
-    bool removeTemplate(const std::string& id);
+    bool loadFromDirectory(const std::string& directory);
+    bool loadFromFile(const std::string& file_path);
+    void validate();
+    void resolveInheritance();
+    void clear();
 
-    /**
-     * @brief Get a mapping template by ID
-     * 
-     * @param id Template ID
-     * @return std::optional<MappingTemplate> Template if found, empty optional otherwise
-     */
-    std::optional<MappingTemplate> getTemplate(const std::string& id) const;
-
-    /**
-     * @brief Get all mapping templates
-     * 
-     * @return const std::vector<MappingTemplate>& Vector of mapping templates
-     */
-    const std::vector<MappingTemplate>& getTemplates() const { return templates_; }
-
-    /**
-     * @brief Enable hot reload for mapping templates
-     * 
-     * @param directory Directory to watch for changes
-     * @param callback Optional callback to be notified when templates are reloaded
-     * @return true if hot reload was enabled successfully
-     * @return false if hot reload could not be enabled
-     */
     bool enableHotReload(const std::string& directory, TemplateChangeCallback callback = nullptr);
-
-    /**
-     * @brief Disable hot reload for mapping templates
-     */
     void disableHotReload();
 
-    /**
-     * @brief Check if hot reload is enabled
-     * 
-     * @return true if hot reload is enabled
-     * @return false if hot reload is disabled
-     */
-    bool isHotReloadEnabled() const { return hot_reload_enabled_; }
-
-    /**
-     * @brief Get the directory being watched for changes
-     * 
-     * @return std::string Directory path or empty string if hot reload is disabled
-     */
-    std::string getWatchedDirectory() const { return watched_directory_; }
-
-    /**
-     * @brief Register a callback for template change notifications
-     * 
-     * @param callback Callback function to be called when templates are reloaded
-     */
     void registerChangeCallback(TemplateChangeCallback callback);
-
-    /**
-     * @brief Clear all registered callbacks
-     */
     void clearChangeCallbacks();
 
 private:
+    void handleFileChange(const std::string& file_path);
+    bool reloadTemplates();
+
     std::vector<MappingTemplate> templates_;
-    std::string watched_directory_;
-    bool hot_reload_enabled_ = false;
+    std::map<std::string, int> template_name_to_idx_;
+    std::map<std::string, std::vector<std::string>> inheritance_graph_;
+
     std::shared_ptr<common::FileWatcher> file_watcher_;
     std::vector<TemplateChangeCallback> change_callbacks_;
     std::mutex mutex_;
-
-    /**
-     * @brief Handle file change event
-     * 
-     * @param file_path Path to the changed file
-     */
-    void handleFileChange(const std::string& file_path);
-
-    /**
-     * @brief Reload templates from the watched directory
-     * 
-     * @return true if reload was successful
-     * @return false if reload failed
-     */
-    bool reloadTemplates();
+    bool hot_reload_enabled_ = false;
+    std::string watched_directory_;
 };
 
 } // namespace ocpp
