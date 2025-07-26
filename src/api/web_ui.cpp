@@ -3,6 +3,7 @@
 #include "ocpp_gateway/common/config_manager.h"
 #include "ocpp_gateway/common/metrics_collector.h"
 #include "ocpp_gateway/common/language_manager.h"
+#include "ocpp_gateway/common/config_types.h"
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/filesystem.hpp>
@@ -124,7 +125,7 @@ void WebUI::runServer() {
         auto const port = static_cast<unsigned short>(port_);
 
         net::io_context ioc{1};
-        beast::tcp_acceptor acceptor{ioc, {address, port}};
+        net::ip::tcp::acceptor acceptor{ioc, {address, port}};
 
         while (running_.load()) {
             beast::tcp_stream stream{ioc};
@@ -213,7 +214,7 @@ void WebUI::runServer() {
 
             // 接続を閉じる
             beast::error_code ec;
-            stream.socket().shutdown(beast::tcp_socket::shutdown_send, ec);
+            stream.socket().shutdown(net::ip::tcp::socket::shutdown_send, ec);
         }
     } catch (const std::exception& e) {
         LOG_ERROR(translate("webui_server_error", "WebUIサーバーエラー: {}"), e.what());
@@ -532,7 +533,7 @@ std::string WebUI::generateConfigPage() {
         html << "      <h2>" << translate("system_config", "システム設定") << "</h2>\n";
         html << "      <div class=\"config-item\">\n";
         html << "        <label>" << translate("log_level", "ログレベル") << ":</label>\n";
-        html << "        <span>" << system_config.getLogLevel() << "</span>\n";
+        html << "        <span>" << logLevelToString(system_config.getLogLevel()) << "</span>\n";
         html << "      </div>\n";
         html << "      <div class=\"config-item\">\n";
         html << "        <label>" << translate("max_charge_points", "最大充電ポイント数") << ":</label>\n";

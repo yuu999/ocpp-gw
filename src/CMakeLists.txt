@@ -11,6 +11,7 @@ set(COMMON_SOURCES
     common/tls_manager.cpp
     common/rbac_manager.cpp
     common/i18n_manager.cpp
+    common/language_manager.cpp
 )
 
 # APIライブラリ
@@ -57,6 +58,7 @@ target_link_libraries(ocpp-gateway-common
     yaml-cpp
     ${JSONCPP_LIBRARIES}
     spdlog::spdlog
+    ZLIB::ZLIB
     Threads::Threads
 )
 

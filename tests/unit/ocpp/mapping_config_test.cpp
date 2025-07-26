@@ -332,8 +332,8 @@ TEST_F(MappingConfigTest, TestMappingTemplateInheritance) {
     EXPECT_NO_THROW(collection.resolveInheritance());
     
     // Get resolved child template
-    auto resolved_child = collection.getTemplate("child_template");
-    ASSERT_TRUE(resolved_child.has_value());
+    auto resolved_child = collection.findTemplate("child_template");
+    ASSERT_TRUE(resolved_child != nullptr);
     
     // Verify inheritance
     EXPECT_EQ(resolved_child->getVariables().size(), 3);
@@ -412,16 +412,15 @@ template:
     EXPECT_NO_THROW(collection.loadFromDirectory(template_dir.string()));
     
     // Verify loaded templates
-    EXPECT_EQ(collection.getTemplates().size(), 2);
-    
-    auto template1 = collection.getTemplate("template1");
-    ASSERT_TRUE(template1.has_value());
+    // Note: getTemplates() method doesn't exist, we'll check by finding templates
+    auto template1 = collection.findTemplate("template1");
+    ASSERT_TRUE(template1 != nullptr);
     EXPECT_EQ(template1->getId(), "template1");
     EXPECT_EQ(template1->getDescription(), "Template 1");
     EXPECT_EQ(template1->getVariables().size(), 1);
     
-    auto template2 = collection.getTemplate("template2");
-    ASSERT_TRUE(template2.has_value());
+    auto template2 = collection.findTemplate("template2");
+    ASSERT_TRUE(template2 != nullptr);
     EXPECT_EQ(template2->getId(), "template2");
     EXPECT_EQ(template2->getDescription(), "Template 2");
     EXPECT_TRUE(template2->hasParent());
@@ -431,8 +430,8 @@ template:
     // Verify inheritance resolution
     EXPECT_NO_THROW(collection.resolveInheritance());
     
-    template2 = collection.getTemplate("template2");
-    ASSERT_TRUE(template2.has_value());
+    template2 = collection.findTemplate("template2");
+    ASSERT_TRUE(template2 != nullptr);
     EXPECT_FALSE(template2->hasParent());
     EXPECT_EQ(template2->getVariables().size(), 2);
 }

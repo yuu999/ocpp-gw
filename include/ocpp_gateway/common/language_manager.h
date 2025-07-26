@@ -106,6 +106,9 @@ private:
     LanguageManager(const LanguageManager&) = delete;
     LanguageManager& operator=(const LanguageManager&) = delete;
 
+    // Create default language resource files (English/Japanese)
+    void createDefaultResources();
+
     std::string current_language_;
     std::string resource_dir_;
     std::map<std::string, std::map<std::string, std::string>> translations_;

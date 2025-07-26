@@ -23,8 +23,9 @@ endif()
 
 # 依存ライブラリの検出
 # find_package(PkgConfig REQUIRED)  # Windows環境では無効化
-find_package(Boost REQUIRED COMPONENTS system filesystem thread program_options)
+find_package(Boost REQUIRED COMPONENTS system filesystem thread program_options iostreams)
 find_package(Threads REQUIRED)
+find_package(ZLIB REQUIRED)
 
 # OpenSSL
 find_package(OpenSSL REQUIRED)

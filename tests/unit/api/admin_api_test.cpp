@@ -47,10 +47,11 @@ TEST_F(AdminApiTest, AuthenticationTest) {
     EXPECT_NO_THROW(admin_api_->setAuthentication(false));
 }
 
-TEST_F(AdminApiTest, ErrorResponseTest) {
-    // エラーレスポンス生成のテスト（プライベートメソッドは間接的にテスト）
-    EXPECT_NO_THROW(auto response = admin_api_->createErrorResponse(404, "Test Error"));
-}
+// Note: createErrorResponse is private, so we can't test it directly
+// TEST_F(AdminApiTest, ErrorResponseTest) {
+//     // エラーレスポンス生成のテスト（プライベートメソッドは間接的にテスト）
+//     EXPECT_NO_THROW(auto response = admin_api_->createErrorResponse(404, "Test Error"));
+// }
 
 // 簡易的なHTTPレスポンス構造体の検証
 TEST(AdminApiHttpTest, HttpResponseStructTest) {

@@ -61,7 +61,7 @@ bool initializeApplication(const std::string& config_path, bool verbose) {
         std::string log_file = "/var/log/ocpp-gateway/ocpp-gateway.log";
         
         // ロガーの初期化
-        LogConfig log_config;
+        ocpp_gateway::common::LogConfig log_config;
         log_config.log_level = log_level;
         log_config.log_file = log_file;
         log_config.max_size_mb = 10;
@@ -71,7 +71,7 @@ bool initializeApplication(const std::string& config_path, bool verbose) {
         log_config.daily_rotation = false;
         log_config.compress_logs = true;
         
-        if (!Logger::initialize(log_config)) {
+        if (!ocpp_gateway::common::Logger::initialize(log_config)) {
             std::cerr << "ロガーの初期化に失敗しました" << std::endl;
             return false;
         }
@@ -90,7 +90,7 @@ bool initializeApplication(const std::string& config_path, bool verbose) {
         std::string config_dir = config_file_path.parent_path().string();
         
         // 設定マネージャーの初期化
-        auto& config_manager = ConfigManager::getInstance();
+        auto& config_manager = ocpp_gateway::config::ConfigManager::getInstance();
         if (!config_manager.initialize(config_dir)) {
             LOG_ERROR("設定マネージャーの初期化に失敗しました");
             return false;
@@ -100,7 +100,7 @@ bool initializeApplication(const std::string& config_path, bool verbose) {
         try {
             config_manager.validateAllConfigs();
             LOG_INFO("設定の検証が完了しました");
-        } catch (const ConfigValidationError& e) {
+        } catch (const ocpp_gateway::config::ConfigValidationError& e) {
             LOG_ERROR("設定の検証に失敗しました: {}", e.what());
             return false;
         }
@@ -115,13 +115,17 @@ bool initializeApplication(const std::string& config_path, bool verbose) {
         
         // 管理APIの初期化
         const auto& system_config = config_manager.getSystemConfig();
-        int admin_port = system_config.getAdminApiPort();
-        std::string admin_bind_address = system_config.getAdminApiBindAddress();
+        // Note: Admin API configuration methods don't exist in SystemConfig yet
+        // Using default values for now
+        int admin_port = 8080; // Default admin API port
+        std::string admin_bind_address = "0.0.0.0"; // Default bind address
         
         g_admin_api = std::make_unique<ocpp_gateway::api::AdminApi>(admin_port, admin_bind_address);
         
         // 認証設定
-        bool auth_enabled = system_config.isAdminApiAuthenticationEnabled();
+        // Note: Authentication configuration method doesn't exist in SystemConfig yet
+        // Using default values for now
+        bool auth_enabled = false; // Default: no authentication
         if (auth_enabled) {
             g_admin_api->setAuthentication(true, "admin", "password");
             LOG_INFO("管理API認証を有効にしました");
@@ -203,7 +207,7 @@ void cleanupApplication() {
     // 2. デバイスアダプターの終了
     // 3. マッピングエンジンの終了
     
-    Logger::flush();
+    ocpp_gateway::common::Logger::flush();
     LOG_INFO("アプリケーションの終了処理が完了しました");
 }
 
