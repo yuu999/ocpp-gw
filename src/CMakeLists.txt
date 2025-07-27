@@ -1,5 +1,8 @@
 # ソースファイルの設定
 set(COMMON_SOURCES
+    common/application.cpp
+    common/service_manager.cpp
+    common/error_handling.cpp
     common/logger.cpp
     common/config_manager.cpp
     common/file_watcher.cpp
