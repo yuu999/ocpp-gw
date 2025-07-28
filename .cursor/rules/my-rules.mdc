@@ -35,3 +35,4 @@ OCPP 2.0.1 対応ゲートウェイ・ミドルウェアの開発を行います
 - 実施した作業については、work_log/ ディレクトリに記録する
 - 実施した時刻をファイルのprefixとする。
 - https://github.com/solidstudiosh/ocpp-virtual-charge-point を参考にする。
+- シミュレーション環境を極力利用し、テスト効率を向上させる。
