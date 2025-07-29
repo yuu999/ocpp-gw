@@ -159,3 +159,5 @@ gmon.out
 # Package managers
 conan.lock
 vcpkg_installed/ 
+
+node_modules/
