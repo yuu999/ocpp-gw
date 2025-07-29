@@ -3,7 +3,7 @@
 
 csms:
   # CSMS接続設定
-  url: "wss://csms.example.com/ocpp"  # CSMSのWebSocket URL
+  url: "ws://localhost:9000/CP001"  # CSMSのWebSocket URL（シミュレータ用）
   reconnect_interval_sec: 30           # 再接続間隔（秒）
   max_reconnect_attempts: 10           # 最大再接続試行回数
   
@@ -12,13 +12,13 @@ csms:
   
   # TLS設定
   tls:
-    enabled: true                       # TLSを有効にするかどうか
-    verify_server_cert: true            # サーバー証明書を検証するかどうか
-    verify_hostname: true               # ホスト名を検証するかどうか
+    enabled: false                      # TLSを無効にする（シミュレータ用）
+    verify_server_cert: false           # サーバー証明書を検証しない
+    verify_hostname: false              # ホスト名を検証しない
   
   # 認証設定
   authentication:
-    enabled: false                      # 認証を有効にするかどうか
+    enabled: false                      # 認証を無効にする（シミュレータ用）
     username: ""                        # ユーザー名（認証が有効な場合）
     password: ""                        # パスワード（認証が有効な場合）
   
