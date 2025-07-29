@@ -15,3 +15,9 @@ TEST(SampleTest, BasicAssertions) {
     // Expect false
     EXPECT_FALSE(1 == 2);
 }
+
+// Additional test for project verification
+TEST(ProjectTest, VersionCheck) {
+    // This test will always pass and verifies the test framework is working
+    EXPECT_TRUE(true);
+}

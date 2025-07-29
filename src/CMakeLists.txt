@@ -79,9 +79,14 @@ add_library(ocpp-gateway-device STATIC ${DEVICE_SOURCES})
 target_link_libraries(ocpp-gateway-device
     ocpp-gateway-common
     ${Boost_LIBRARIES}
-    # ${LIBMODBUS_LIBRARIES}  # Windows環境では無効化
     Threads::Threads
 )
+
+# libmodbusが利用可能な場合のみリンク
+if(LIBMODBUS_FOUND)
+    target_link_libraries(ocpp-gateway-device ${LIBMODBUS_LIBRARIES})
+    target_compile_definitions(ocpp-gateway-device PRIVATE MODBUS_SUPPORT_ENABLED)
+endif()
 
 # Mappingライブラリ
 add_library(ocpp-gateway-mapping STATIC ${MAPPING_SOURCES})
@@ -126,8 +131,12 @@ target_include_directories(ocpp-gateway-common PUBLIC
     ${CMAKE_SOURCE_DIR}/third_party
     ${Boost_INCLUDE_DIRS}
     ${JSONCPP_INCLUDE_DIRS}
-    # ${LIBMODBUS_INCLUDE_DIRS}  # Windows環境では無効化
 )
+
+# libmodbusが利用可能な場合のみインクルードディレクトリを追加
+if(LIBMODBUS_FOUND)
+    target_include_directories(ocpp-gateway-common PUBLIC ${LIBMODBUS_INCLUDE_DIRS})
+endif()
 
 # 各ライブラリに同じインクルードディレクトリを設定
 foreach(lib ocpp-gateway-api ocpp-gateway-device ocpp-gateway-mapping ocpp-gateway-ocpp ocpp-gateway)
@@ -136,6 +145,10 @@ foreach(lib ocpp-gateway-api ocpp-gateway-device ocpp-gateway-mapping ocpp-gatew
         ${CMAKE_SOURCE_DIR}/third_party
         ${Boost_INCLUDE_DIRS}
         ${JSONCPP_INCLUDE_DIRS}
-        # ${LIBMODBUS_INCLUDE_DIRS}  # Windows環境では無効化
     )
+    
+    # libmodbusが利用可能な場合のみインクルードディレクトリを追加
+    if(LIBMODBUS_FOUND)
+        target_include_directories(${lib} PUBLIC ${LIBMODBUS_INCLUDE_DIRS})
+    endif()
 endforeach() 

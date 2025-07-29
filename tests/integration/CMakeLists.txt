@@ -19,11 +19,15 @@ if(TEST_SOURCES)
         ${Boost_LIBRARIES}
         yaml-cpp
         ${JSONCPP_LIBRARIES}
-        ${LIBMODBUS_LIBRARIES}
         OpenSSL::SSL
         OpenSSL::Crypto
         Threads::Threads
     )
+    
+    # Add libmodbus if available
+    if(LIBMODBUS_FOUND)
+        target_link_libraries(integration_tests ${LIBMODBUS_LIBRARIES})
+    endif()
 
     # Add tests to CTest
     include(GoogleTest)

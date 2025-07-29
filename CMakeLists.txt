@@ -37,8 +37,12 @@ find_package(yaml-cpp REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 
-# libmodbus
-# pkg_check_modules(LIBMODBUS REQUIRED libmodbus)  # Windows環境では無効化
+# libmodbus (オプション)
+find_package(PkgConfig)
+pkg_check_modules(LIBMODBUS libmodbus)
+if(NOT LIBMODBUS_FOUND)
+    message(WARNING "libmodbus not found - Modbus support will be disabled")
+endif()
 
 # spdlog
 find_package(spdlog REQUIRED)
@@ -87,6 +91,11 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "OCPP 2.0.1 Gateway for EL/Modbus chargers
 set(CPACK_PACKAGE_VENDOR "OCPP Gateway Project")
 set(CPACK_GENERATOR "DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "OCPP Gateway Team")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libboost-all-dev, libssl-dev, libyaml-cpp-dev, libjsoncpp-dev, libmodbus-dev, libspdlog-dev")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libboost-all-dev, libssl-dev, libyaml-cpp-dev, libjsoncpp-dev, libspdlog-dev")
+
+# libmodbusが利用可能な場合のみ依存関係に追加
+if(LIBMODBUS_FOUND)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libmodbus-dev")
+endif()
 
 include(CPack) 
