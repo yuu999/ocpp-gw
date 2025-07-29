@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # OCPP CSMS Server
+  csms:
+    image: ocpp-cs/csms:latest
+    container_name: ocpp-csms
+    ports:
+      - "9000:9000"
+      - "8080:8080"  # Web UI
+    environment:
+      - CSMS_HOST=0.0.0.0
+      - CSMS_PORT=9000
+      - WEB_UI_HOST=0.0.0.0
+      - WEB_UI_PORT=8080
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - ocpp-network
+
+  # OCPP Gateway (placeholder for testing)
+  ocpp-gateway:
+    build: 
+      context: ../../../
+      dockerfile: Dockerfile
+    container_name: ocpp-gateway
+    ports:
+      - "8081:8081"  # Gateway API
+    environment:
+      - GATEWAY_HOST=0.0.0.0
+      - GATEWAY_PORT=8081
+      - CSMS_URL=ws://csms:9000/CSMS001
+    depends_on:
+      - csms
+    restart: unless-stopped
+    networks:
+      - ocpp-network
+
+  # ECHONET Lite Simulator
+  echonet-simulator:
+    build:
+      context: ../../echonet-simulator/
+      dockerfile: Dockerfile
+    container_name: echonet-simulator
+    ports:
+      - "3610:3610"  # ECHONET Lite UDP
+    environment:
+      - SIMULATOR_HOST=0.0.0.0
+      - SIMULATOR_PORT=3610
+    restart: unless-stopped
+    networks:
+      - ocpp-network
+
+networks:
+  ocpp-network:
+    driver: bridge 

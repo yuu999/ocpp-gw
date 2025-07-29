@@ -1,0 +1,90 @@
+# ECHONET Lite Simulator Configuration
+
+# Server settings
+server:
+  port: 3610
+  host: "0.0.0.0"
+
+# API settings
+api:
+  port: 8080
+  host: "0.0.0.0"
+
+# Logging settings
+logging:
+  level: "info"
+  console: true
+  file: "logs/simulator.log"
+
+# Device configurations
+devices:
+  - eoj: "0x02A1"  # EV Charger
+    instance: 1
+    name: "EV Charger 1"
+    properties:
+      - epc: 0x80  # Operating status
+        initialValue: 0x30
+      - epc: 0x82  # Standard version information
+        initialValue: 0x61
+      - epc: 0x84  # Measured instantaneous amount of electricity
+        initialValue: 0
+        simulation:
+          type: "increment"
+          interval: 1000  # ms
+          step: 100       # Wh
+          min: 0
+          max: 1000000
+      - epc: 0xD8  # Measured cumulative amount of electricity
+        initialValue: 0
+        simulation:
+          type: "increment"
+          interval: 5000  # ms
+          step: 1000      # Wh
+          min: 0
+          max: 10000000
+      - epc: 0xD9  # Cumulative amount of electricity reset setting
+        initialValue: 0
+        writable: true
+      - epc: 0xE6  # Vehicle ID
+        initialValue: 0
+
+  - eoj: "0x027E"  # EV Charger and Discharger
+    instance: 1
+    name: "EV Charger and Discharger 1"
+    properties:
+      - epc: 0x80  # Operating status
+        initialValue: 0x30
+      - epc: 0x82  # Standard version information
+        initialValue: 0x61
+      - epc: 0x84  # Measured instantaneous amount of electricity
+        initialValue: 0
+        simulation:
+          type: "increment"
+          interval: 1000  # ms
+          step: 100       # Wh
+          min: 0
+          max: 1000000
+      - epc: 0xD6  # Measured cumulative discharge amount of electricity
+        initialValue: 0
+        simulation:
+          type: "increment"
+          interval: 5000  # ms
+          step: 500       # Wh
+          min: 0
+          max: 10000000
+      - epc: 0xD7  # Cumulative discharge amount of electricity reset setting
+        initialValue: 0
+        writable: true
+      - epc: 0xD8  # Measured cumulative charge amount of electricity
+        initialValue: 0
+        simulation:
+          type: "increment"
+          interval: 5000  # ms
+          step: 1000      # Wh
+          min: 0
+          max: 10000000
+      - epc: 0xD9  # Cumulative charge amount of electricity reset setting
+        initialValue: 0
+        writable: true
+      - epc: 0xE6  # Vehicle ID
+        initialValue: 0 

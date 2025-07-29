@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  echonet-simulator:
+    build: .
+    ports:
+      - "3610:3610/udp"
+      - "8080:8080"
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - echonet-network
+
+  # OCPP Gateway (for testing)
+  ocpp-gateway:
+    image: ocpp-gateway:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - ECHONET_HOST=echonet-simulator
+      - ECHONET_PORT=3610
+    depends_on:
+      - echonet-simulator
+    networks:
+      - echonet-network
+
+networks:
+  echonet-network:
+    driver: bridge 

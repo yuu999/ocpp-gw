@@ -1,0 +1,4 @@
+ocpp>=0.20.0
+websockets>=11.0.0
+asyncio-mqtt>=0.16.0
+pydantic>=2.0.0 

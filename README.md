@@ -104,6 +104,9 @@ ocpp-gateway --config /path/to/system.yaml
 ├── examples/               # Sample programs
 ├── scripts/                # Helper scripts & service files
 ├── work_log/               # Development history logs
+├── simulators/             # Test simulators for development
+│   ├── elemu/             # Reference ECHONET Lite emulator
+│   └── echonet-simulator/ # New ECHONET Lite simulator
 ├── third_party/            # External dependencies (vendored or submodules)
 └── CMakeLists.txt          # Top-level build script
 ```
