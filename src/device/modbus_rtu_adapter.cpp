@@ -1362,9 +1362,6 @@ void ModbusRtuAdapter::statusMonitorThreadFunc() {
 #else // MODBUS_SUPPORT_ENABLED
 
 // Stub implementation when modbus is not available
-namespace ocpp_gateway {
-namespace device {
-
 ModbusRtuAdapter::ModbusRtuAdapter()
     : BaseDeviceAdapter(DeviceProtocol::MODBUS_RTU) {
 }
