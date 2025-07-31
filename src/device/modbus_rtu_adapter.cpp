@@ -1,5 +1,7 @@
 #include "ocpp_gateway/device/modbus_rtu_adapter.h"
+#ifdef MODBUS_SUPPORT_ENABLED
 #include <modbus/modbus.h>
+#endif
 #include <algorithm>
 #include <cstring>
 #include <fcntl.h>
@@ -10,6 +12,8 @@
 
 namespace ocpp_gateway {
 namespace device {
+
+#ifdef MODBUS_SUPPORT_ENABLED
 
 // Modbus function codes
 // Duplicate constant definitions removed (they already exist in modbus.h)
@@ -1354,3 +1358,77 @@ void ModbusRtuAdapter::statusMonitorThreadFunc() {
 
 } // namespace device
 } // namespace ocpp_gateway
+
+#else // MODBUS_SUPPORT_ENABLED
+
+// Stub implementation when modbus is not available
+namespace ocpp_gateway {
+namespace device {
+
+ModbusRtuAdapter::ModbusRtuAdapter()
+    : BaseDeviceAdapter(DeviceProtocol::MODBUS_RTU) {
+}
+
+ModbusRtuAdapter::~ModbusRtuAdapter() {
+}
+
+bool ModbusRtuAdapter::initialize() {
+    LOG_WARN("Modbus RTU adapter not available - libmodbus not found");
+    return false;
+}
+
+bool ModbusRtuAdapter::start() {
+    LOG_WARN("Modbus RTU adapter not available - libmodbus not found");
+    return false;
+}
+
+void ModbusRtuAdapter::stop() {
+}
+
+bool ModbusRtuAdapter::startDiscovery(DeviceDiscoveryCallback callback, 
+                                    std::chrono::milliseconds timeout_ms) {
+    LOG_WARN("Modbus RTU discovery not available - libmodbus not found");
+    return false;
+}
+
+void ModbusRtuAdapter::stopDiscovery() {
+}
+
+bool ModbusRtuAdapter::addDevice(const DeviceInfo& device_info) {
+    LOG_WARN("Modbus RTU device not available - libmodbus not found");
+    return false;
+}
+
+bool ModbusRtuAdapter::removeDevice(const std::string& device_id) {
+    return false;
+}
+
+bool ModbusRtuAdapter::updateDevice(const DeviceInfo& device_info) {
+    LOG_WARN("Modbus RTU device not available - libmodbus not found");
+    return false;
+}
+
+ReadResult ModbusRtuAdapter::readRegister(const DeviceInfo& device_info, const RegisterAddress& address) {
+    return createErrorReadResult("Modbus RTU not available - libmodbus not found", -1);
+}
+
+WriteResult ModbusRtuAdapter::writeRegister(const DeviceInfo& device_info, const RegisterAddress& address, const RegisterValue& value) {
+    return createErrorWriteResult("Modbus RTU not available - libmodbus not found", -1);
+}
+
+ReadResult ModbusRtuAdapter::readRegisterGroup(const DeviceInfo& device_info, const std::vector<RegisterAddress>& addresses) {
+    return createErrorReadResult("Modbus RTU not available - libmodbus not found", -1);
+}
+
+WriteResult ModbusRtuAdapter::writeRegisterGroup(const DeviceInfo& device_info, const std::vector<RegisterAddress>& addresses, const std::vector<RegisterValue>& values) {
+    return createErrorWriteResult("Modbus RTU not available - libmodbus not found", -1);
+}
+
+bool ModbusRtuAdapter::validateRegisterValue(const RegisterAddress& address, const RegisterValue& value) const {
+    return false;
+}
+
+} // namespace device
+} // namespace ocpp_gateway
+
+#endif // MODBUS_SUPPORT_ENABLED

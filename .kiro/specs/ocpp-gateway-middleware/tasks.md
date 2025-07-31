@@ -346,3 +346,76 @@
     - Add backup and recovery procedures
     - Write update and maintenance instructions
     - _Requirements: All_
+
+# ECHONET Lite Simulator Development Tasks
+
+- [x] 13. ECHONET Lite Simulator Development
+  - [x] 13.1 Project structure setup
+    - [x] Create TypeScript project structure
+    - [x] Configure package.json with dependencies
+    - [x] Set up tsconfig.json
+    - [x] Create Docker and Docker Compose files
+    - _Requirements: F-1, F-5, F-9_
+
+  - [x] 13.2 Core ECHONET Lite implementation
+    - [x] Create basic type definitions
+    - [x] Implement ECHONET Lite server (UDP)
+    - [x] Add frame parsing and serialization
+    - [x] Create device instance management
+    - _Requirements: F-1, F-4_
+
+  - [x] 13.3 EV Charger class implementation
+    - [x] Implement EV Charger (0x02A1) class
+    - [x] Add property initialization
+    - [x] Implement cumulative electricity reset (EPC 0xD9)
+    - [x] Add simulation mode support
+    - _Requirements: F-1, F-2, F-3_
+
+  - [ ] 13.4 EV Charger and Discharger class implementation
+    - [ ] Implement EV Charger and Discharger (0x027E) class
+    - [ ] Add discharge electricity properties
+    - [ ] Implement discharge reset (EPC 0xD7)
+    - [ ] Add charge/discharge simulation
+    - _Requirements: F-1, F-2, F-3_
+
+  - [ ] 13.5 REST API implementation
+    - [ ] Create Express.js server
+    - [ ] Implement device listing endpoint
+    - [ ] Add property get/set endpoints
+    - [ ] Add simulation control endpoints
+    - _Requirements: F-6, F-8_
+
+  - [ ] 13.6 CLI implementation
+    - [ ] Create command-line interface
+    - [ ] Add device management commands
+    - [ ] Implement property get/set commands
+    - [ ] Add simulation control commands
+    - _Requirements: F-6, F-8_
+
+  - [ ] 13.7 Configuration management
+    - [ ] Implement YAML configuration parser
+    - [ ] Add device template system
+    - [ ] Create hot reload capability
+    - [ ] Add configuration validation
+    - _Requirements: F-5_
+
+  - [ ] 13.8 Logging and monitoring
+    - [ ] Implement structured logging
+    - [ ] Add packet capture functionality
+    - [ ] Create performance metrics
+    - [ ] Add health check endpoints
+    - _Requirements: F-7_
+
+  - [ ] 13.9 Testing and validation
+    - [ ] Create unit tests for core components
+    - [ ] Add integration tests with OCPP gateway
+    - [ ] Implement performance tests
+    - [ ] Create automated test scripts
+    - _Requirements: All_
+
+  - [ ] 13.10 Documentation and deployment
+    - [ ] Write comprehensive README
+    - [ ] Create API documentation
+    - [ ] Add deployment guides
+    - [ ] Create troubleshooting guide
+    - _Requirements: All_

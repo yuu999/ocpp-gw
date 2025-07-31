@@ -48,6 +48,22 @@ if(NOT LIBMODBUS_FOUND)
     message(WARNING "libmodbus not found - Modbus support will be disabled")
 endif()
 
+# uuid library
+find_package(PkgConfig)
+pkg_check_modules(UUID uuid)
+if(NOT UUID_FOUND)
+    # Try alternative names for uuid library
+    find_library(UUID_LIBRARY NAMES uuid libuuid)
+    find_path(UUID_INCLUDE_DIR NAMES uuid/uuid.h)
+    if(UUID_LIBRARY AND UUID_INCLUDE_DIR)
+        set(UUID_FOUND TRUE)
+        set(UUID_LIBRARIES ${UUID_LIBRARY})
+        set(UUID_INCLUDE_DIRS ${UUID_INCLUDE_DIR})
+    else()
+        message(WARNING "uuid library not found - UUID support will be disabled")
+    endif()
+endif()
+
 # spdlog
 find_package(spdlog REQUIRED)
 

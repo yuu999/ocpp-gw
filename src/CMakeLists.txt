@@ -107,6 +107,12 @@ target_link_libraries(ocpp-gateway-ocpp
     Threads::Threads
 )
 
+# uuidライブラリが利用可能な場合のみリンク
+if(UUID_FOUND)
+    target_link_libraries(ocpp-gateway-ocpp ${UUID_LIBRARIES})
+    target_compile_definitions(ocpp-gateway-ocpp PRIVATE UUID_SUPPORT_ENABLED)
+endif()
+
 # メイン実行ファイル
 add_executable(ocpp-gateway main.cpp)
 target_link_libraries(ocpp-gateway
@@ -136,6 +142,11 @@ target_include_directories(ocpp-gateway-common PUBLIC
 # libmodbusが利用可能な場合のみインクルードディレクトリを追加
 if(LIBMODBUS_FOUND)
     target_include_directories(ocpp-gateway-common PUBLIC ${LIBMODBUS_INCLUDE_DIRS})
+endif()
+
+# uuidライブラリが利用可能な場合のみインクルードディレクトリを追加
+if(UUID_FOUND)
+    target_include_directories(ocpp-gateway-ocpp PUBLIC ${UUID_INCLUDE_DIRS})
 endif()
 
 # 各ライブラリに同じインクルードディレクトリを設定

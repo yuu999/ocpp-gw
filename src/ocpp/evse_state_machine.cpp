@@ -1,7 +1,10 @@
 #include "ocpp_gateway/ocpp/evse_state_machine.h"
 #include <iomanip>
 #include <sstream>
+#include <ctime>
+#ifdef UUID_SUPPORT_ENABLED
 #include <uuid/uuid.h>
+#endif
 
 namespace ocpp_gateway {
 namespace ocpp {
@@ -428,6 +431,7 @@ void EvseStateMachine::addMeterValue(double value) {
 }
 
 std::string EvseStateMachine::generateTransactionId() const {
+#ifdef UUID_SUPPORT_ENABLED
     uuid_t uuid;
     char uuid_str[37];
     
@@ -435,6 +439,13 @@ std::string EvseStateMachine::generateTransactionId() const {
     uuid_unparse_lower(uuid, uuid_str);
     
     return uuid_str;
+#else
+    // Fallback implementation without uuid library
+    static int counter = 0;
+    std::stringstream ss;
+    ss << "transaction_" << std::hex << std::time(nullptr) << "_" << ++counter;
+    return ss.str();
+#endif
 }
 
 void EvseStateMachine::startHeartbeat(std::chrono::seconds interval) {
