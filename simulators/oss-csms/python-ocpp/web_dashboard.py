@@ -143,7 +143,7 @@ class WebDashboard:
     def run(self):
         """Start the web dashboard"""
         logger.info(f"Starting OCPP Web Dashboard on port {self.port}")
-        self.socketio.run(self.app, host='0.0.0.0', port=self.port, debug=False)
+        self.socketio.run(self.app, host='0.0.0.0', port=self.port, debug=False, allow_unsafe_werkzeug=True)
 
 # Global dashboard instance
 dashboard = None
