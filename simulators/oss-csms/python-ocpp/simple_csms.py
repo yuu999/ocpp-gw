@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple OCPP 2.0.1 CSMS Server
+Simple OCPP 2.0.1 CSMS Server with Enhanced Visualization
 """
 
 import asyncio
@@ -9,32 +9,174 @@ import logging
 import websockets
 from datetime import datetime
 from typing import Dict, Set
+import colorama
+from colorama import Fore, Back, Style
+import threading
+import time
+from web_dashboard import start_dashboard
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# Initialize colorama for colored output
+colorama.init()
+
+# Custom formatter for colored logs
+class ColoredFormatter(logging.Formatter):
+    def format(self, record):
+        if record.levelname == 'INFO':
+            record.levelname = f"{Fore.GREEN}INFO{Style.RESET_ALL}"
+        elif record.levelname == 'DEBUG':
+            record.levelname = f"{Fore.CYAN}DEBUG{Style.RESET_ALL}"
+        elif record.levelname == 'ERROR':
+            record.levelname = f"{Fore.RED}ERROR{Style.RESET_ALL}"
+        elif record.levelname == 'WARNING':
+            record.levelname = f"{Fore.YELLOW}WARNING{Style.RESET_ALL}"
+        return super().format(record)
+
+# Configure logging with colors
+handler = logging.StreamHandler()
+handler.setFormatter(ColoredFormatter())
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[handler]
+)
 logger = logging.getLogger(__name__)
 
 class SimpleCSMS:
-    def __init__(self):
+    def __init__(self, enable_web_dashboard=True):
         self.charging_stations: Dict[str, Dict] = {}
         self.connections: Set[websockets.WebSocketServerProtocol] = set()
+        self.message_count = 0
+        self.start_time = datetime.now()
+        self.last_activity = {}
+        self.web_dashboard = None
+        
+        # Start web dashboard if enabled
+        if enable_web_dashboard:
+            try:
+                self.web_dashboard = start_dashboard(port=8081)
+                print(f"{Fore.GREEN}🌐 Web Dashboard started at http://localhost:8081{Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.YELLOW}⚠️  Web Dashboard failed to start: {e}{Style.RESET_ALL}")
+        
+    def print_header(self):
+        """Print colorful header"""
+        print(f"\n{Back.BLUE}{Fore.WHITE}{'='*80}{Style.RESET_ALL}")
+        print(f"{Back.BLUE}{Fore.WHITE}  OCPP 2.0.1 CSMS Simulator - Communication Monitor  {Style.RESET_ALL}")
+        print(f"{Back.BLUE}{Fore.WHITE}{'='*80}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}🚀 Server Status: {Fore.GREEN}RUNNING{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}📡 WebSocket Port: {Fore.YELLOW}9000{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}🔗 Protocol: {Fore.YELLOW}OCPP 2.0.1{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}⏰ Started: {Fore.YELLOW}{self.start_time.strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
+        print(f"{Back.BLUE}{Fore.WHITE}{'='*80}{Style.RESET_ALL}\n")
+    
+    def print_connection_status(self, charging_station_id: str, action: str):
+        """Print connection status with colors"""
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        if action == "CONNECTED":
+            print(f"{Fore.GREEN}[{timestamp}] 🔌 {charging_station_id} CONNECTED{Style.RESET_ALL}")
+        elif action == "DISCONNECTED":
+            print(f"{Fore.RED}[{timestamp}] 🔌 {charging_station_id} DISCONNECTED{Style.RESET_ALL}")
+    
+    def print_message_exchange(self, charging_station_id: str, direction: str, message_type: str, payload: dict):
+        """Print detailed message exchange"""
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        self.message_count += 1
+        
+        # Direction icons and colors
+        if direction == "RECEIVED":
+            icon = "📥"
+            color = Fore.CYAN
+        else:  # SENT
+            icon = "📤"
+            color = Fore.MAGENTA
+            
+        print(f"\n{color}[{timestamp}] {icon} {direction} from/to {charging_station_id}{Style.RESET_ALL}")
+        print(f"{color}└─ Message Type: {Fore.YELLOW}{message_type}{Style.RESET_ALL}")
+        
+        # Pretty print payload
+        if payload:
+            print(f"{color}└─ Payload:{Style.RESET_ALL}")
+            for key, value in payload.items():
+                if isinstance(value, dict):
+                    print(f"{color}   ├─ {key}:{Style.RESET_ALL}")
+                    for k, v in value.items():
+                        print(f"{color}   │  └─ {k}: {Fore.WHITE}{v}{Style.RESET_ALL}")
+                else:
+                    print(f"{color}   └─ {key}: {Fore.WHITE}{value}{Style.RESET_ALL}")
+        
+        print(f"{Fore.GREEN}💬 Total Messages: {self.message_count}{Style.RESET_ALL}")
+        print("-" * 60)
+    
+    def print_statistics(self):
+        """Print current statistics"""
+        uptime = datetime.now() - self.start_time
+        print(f"\n{Back.GREEN}{Fore.BLACK} LIVE STATISTICS {Style.RESET_ALL}")
+        print(f"⏱️  Uptime: {uptime}")
+        print(f"🔗 Active Connections: {len(self.connections)}")
+        print(f"💬 Total Messages: {self.message_count}")
+        print(f"📊 Connected Stations: {len(self.charging_stations)}")
+        if self.charging_stations:
+            for station_id, info in self.charging_stations.items():
+                last_seen = info.get('last_seen', 'Never')
+                print(f"   └─ {station_id}: {last_seen}")
+        print()
 
-    async def handle_connection(self, websocket, path):
+    async def handle_connection(self, websocket, path=None):
         """Handle WebSocket connection"""
+        # Handle both old and new websockets library signatures
+        if path is None:
+            path = getattr(websocket, 'path', '/CP001')
         charging_station_id = path.split('/')[-1] if path else 'unknown'
-        logger.info(f"Charging station connected: {charging_station_id}")
-        logger.debug(f"Connection path: {path}")
+        
+        # Visual connection notification
+        self.print_connection_status(charging_station_id, "CONNECTED")
+        
+        # Update charging station info
+        connection_info = {
+            'connected_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'last_seen': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'message_count': 0
+        }
+        self.charging_stations[charging_station_id] = connection_info
+        
+        # Update web dashboard
+        if self.web_dashboard:
+            self.web_dashboard.add_connection(charging_station_id, connection_info)
         
         self.connections.add(websocket)
         
         try:
             async for message in websocket:
-                logger.debug(f"Received raw message: {message}")
                 try:
                     data = json.loads(message)
-                    logger.debug(f"Parsed JSON: {data}")
+                    
+                    # Extract message info for visualization
+                    message_type = data[2] if len(data) > 2 else "Unknown"
+                    payload = data[3] if len(data) > 3 else {}
+                    
+                    # Visual display of received message
+                    self.print_message_exchange(charging_station_id, "RECEIVED", message_type, payload)
+                    
+                    # Update web dashboard with received message
+                    if self.web_dashboard:
+                        self.web_dashboard.add_message(charging_station_id, "received", message_type, payload)
+                    
+                    # Update station info
+                    if charging_station_id in self.charging_stations:
+                        self.charging_stations[charging_station_id]['last_seen'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        self.charging_stations[charging_station_id]['message_count'] += 1
+                    
                     response = await self.handle_message(charging_station_id, data)
                     if response:
-                        logger.debug(f"Sending response: {response}")
+                        # Visual display of sent response
+                        response_type = "Response"
+                        response_payload = response[2] if len(response) > 2 else {}
+                        self.print_message_exchange(charging_station_id, "SENT", response_type, response_payload)
+                        
+                        # Update web dashboard with sent message
+                        if self.web_dashboard:
+                            self.web_dashboard.add_message(charging_station_id, "sent", response_type, response_payload)
+                        
                         await websocket.send(json.dumps(response))
                 except json.JSONDecodeError as e:
                     logger.error(f"Invalid JSON: {message}, error: {e}")
@@ -49,11 +191,19 @@ class SimpleCSMS:
                     logger.debug(f"Sending error response: {error_response}")
                     await websocket.send(json.dumps(error_response))
         except websockets.exceptions.ConnectionClosed:
-            logger.info(f"Charging station disconnected: {charging_station_id}")
+            self.print_connection_status(charging_station_id, "DISCONNECTED")
         except Exception as e:
             logger.error(f"Connection error: {e}")
         finally:
             self.connections.discard(websocket)
+            if charging_station_id in self.charging_stations:
+                del self.charging_stations[charging_station_id]
+            
+            # Update web dashboard
+            if self.web_dashboard:
+                self.web_dashboard.remove_connection(charging_station_id)
+            
+            self.print_statistics()
 
     async def handle_message(self, charging_station_id: str, message: list):
         """Handle OCPP message"""
@@ -209,9 +359,19 @@ class SimpleCSMS:
             "active_connections": len(self.connections)
         }
 
+async def statistics_monitor(csms):
+    """Background task to show periodic statistics"""
+    while True:
+        await asyncio.sleep(30)  # Show stats every 30 seconds
+        if csms.connections:
+            csms.print_statistics()
+
 async def main():
-    """Main function to start CSMS server"""
+    """Main function to start CSMS server with enhanced visualization"""
     csms = SimpleCSMS()
+    
+    # Print the colorful header
+    csms.print_header()
     
     try:
         server = await websockets.serve(
@@ -221,8 +381,14 @@ async def main():
             subprotocols=['ocpp2.0.1']
         )
         
-        logger.info("Simple CSMS Server started on ws://0.0.0.0:9000")
-        logger.info("Waiting for charging stations to connect...")
+        print(f"{Fore.GREEN}✅ CSMS Server successfully started!{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}🌐 OCPP WebSocket: ws://0.0.0.0:9000{Style.RESET_ALL}")
+        print(f"{Fore.MAGENTA}📊 Web Dashboard: http://localhost:8081{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}⏳ Waiting for OCPP charging stations to connect...{Style.RESET_ALL}")
+        print(f"{Fore.WHITE}{'='*60}{Style.RESET_ALL}\n")
+        
+        # Start background statistics monitor
+        asyncio.create_task(statistics_monitor(csms))
         
         await server.wait_closed()
     except Exception as e:

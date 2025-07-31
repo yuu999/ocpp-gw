@@ -161,3 +161,4 @@ conan.lock
 vcpkg_installed/ 
 
 node_modules/
+__pycache__/

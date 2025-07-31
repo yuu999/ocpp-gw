@@ -1,4 +1,7 @@
 ocpp>=0.20.0
 websockets>=11.0.0
 asyncio-mqtt>=0.16.0
-pydantic>=2.0.0 
+pydantic>=2.0.0
+colorama>=0.4.4
+flask>=2.3.0
+flask-socketio>=5.3.0 

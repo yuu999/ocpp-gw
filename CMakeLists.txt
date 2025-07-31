@@ -33,7 +33,11 @@ find_package(OpenSSL REQUIRED)
 # yaml-cpp
 find_package(yaml-cpp REQUIRED)
 
-# jsoncpp
+# nlohmann/json (header-only library)
+# Since it's header-only, we just need to ensure the include path is available
+# The header is typically installed in /usr/include/nlohmann/json.hpp
+
+# jsoncpp (keeping for backward compatibility if needed)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 
