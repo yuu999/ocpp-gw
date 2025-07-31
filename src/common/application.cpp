@@ -208,15 +208,22 @@ bool Application::initializeComponents() {
         }
         LOG_INFO("Prometheusエクスポーターを初期化しました: {}:{}{}", "0.0.0.0", 9090, "/metrics");
         
-        // TODO: Business logic components initialization
+        // Business logic components initialization
         // 1. マッピングエンジンの初期化
-        // mapping_engine_ = std::make_unique<mapping::MappingEngine>();
+        mapping_engine_ = std::make_unique<mapping::MappingEngine>();
+        fs::path mapping_config_path = fs::path(config_dir) / "templates";
+        if (!mapping_engine_->initialize(mapping_config_path.string())) {
+            LOG_ERROR("マッピングエンジンの初期化に失敗しました");
+            return false;
+        }
+        LOG_INFO("マッピングエンジンを初期化しました");
         
         // 2. デバイスマネージャーの初期化 (これは新しいクラスで複数のアダプターを管理)
         // device_manager_ = std::make_unique<device::DeviceManager>();
         
-        // 3. OCPPクライアントマネージャーの初期化
-        // ocpp_client_manager_ = std::make_unique<ocpp::OcppClientManager>();
+        // 3. OCPPクライアントマネージャーの初期化は後で実装
+        // TODO: io_contextとconfigを適切に渡す必要がある
+        LOG_INFO("OCPPクライアントマネージャーの初期化をスキップ（要実装）");
         
         running_ = true;
         return true;

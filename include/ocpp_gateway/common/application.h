@@ -24,13 +24,13 @@ namespace ocpp {
     class OcppClientManager;
 }
 
-// namespace device {
-//     class DeviceManager;
-// }
-
 namespace mapping {
     class MappingEngine;
 }
+
+// namespace device {
+//     class DeviceManager;
+// }
 
 namespace config {
     class ConfigManager;
@@ -163,10 +163,10 @@ private:
     std::unique_ptr<api::WebUI> web_ui_;
     std::unique_ptr<common::PrometheusExporter> prometheus_exporter_;
     
-    // Business logic components (TODO: implement in Phase 2)
-    // std::unique_ptr<mapping::MappingEngine> mapping_engine_;
+    // Business logic components
+    std::unique_ptr<mapping::MappingEngine> mapping_engine_;
     // std::unique_ptr<device::DeviceManager> device_manager_;
-    // std::unique_ptr<ocpp::OcppClientManager> ocpp_client_manager_;
+    // std::unique_ptr<ocpp::OcppClientManager> ocpp_client_manager_;  // TODO: 要実装
 
     // Signal handling
     static Application* instance_;
