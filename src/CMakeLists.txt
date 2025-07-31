@@ -128,7 +128,6 @@ target_link_libraries(ocpp-gateway
 # コンパイル定義
 target_compile_definitions(ocpp-gateway-common PRIVATE
     BOOST_ALL_NO_LIB
-    BOOST_ASIO_SEPARATE_COMPILATION
 )
 
 # インクルードディレクトリの設定
