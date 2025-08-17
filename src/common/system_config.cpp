@@ -1,4 +1,5 @@
 #include "ocpp_gateway/common/system_config.h"
+#include "ocpp_gateway/common/logger.h"
 #include <yaml-cpp/yaml.h>
 #include <json/json.h>
 #include <fstream>
@@ -19,17 +20,22 @@ SystemConfig::SystemConfig(const std::string& yaml_file)
 
 bool SystemConfig::loadFromYaml(const std::string& yaml_file) {
     try {
+        LOG_INFO("YAMLファイルを読み込み中: {}", yaml_file);
         YAML::Node config = YAML::LoadFile(yaml_file);
+        LOG_INFO("YAMLファイルの読み込み完了");
         
         if (!config["system"]) {
+            LOG_ERROR("YAMLファイルに'system'セクションがありません");
             return false;
         }
 
         YAML::Node system = config["system"];
+        LOG_INFO("システム設定セクションを処理中...");
         
         // Load log level
         if (system["log_level"]) {
             log_level_ = logLevelFromString(system["log_level"].as<std::string>());
+            LOG_INFO("ログレベルを設定: {}", system["log_level"].as<std::string>());
         }
         
         // Load log rotation
@@ -65,15 +71,16 @@ bool SystemConfig::loadFromYaml(const std::string& yaml_file) {
             }
         }
         
+        LOG_INFO("システム設定の読み込み完了");
         return validate();
     } catch (const YAML::Exception& e) {
-        // Log error
+        LOG_ERROR("YAML例外: {}", e.what());
         return false;
     } catch (const ConfigValidationError& e) {
-        // Log error
+        LOG_ERROR("設定検証エラー: {}", e.what());
         return false;
     } catch (const std::exception& e) {
-        // Log error
+        LOG_ERROR("一般例外: {}", e.what());
         return false;
     }
 }

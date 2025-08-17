@@ -58,37 +58,45 @@ bool ConfigManager::initialize(const std::string& config_dir) {
 bool ConfigManager::loadAllConfigs() {
     std::lock_guard<std::mutex> lock(mutex_);
     
+    LOG_INFO("設定ファイルの読み込みを開始します");
+    
     // Load system configuration
     std::string system_config_path = config_dir_ + "/system.yaml";
+    LOG_INFO("システム設定ファイルを確認中: {}", system_config_path);
     if (fs::exists(system_config_path)) {
+        LOG_INFO("システム設定ファイルを読み込み中...");
         if (!system_config_.loadFromYaml(system_config_path)) {
             LOG_ERROR("システム設定の読み込みに失敗しました: {}", system_config_path);
             return false;
         }
-        LOG_DEBUG("システム設定を読み込みました: {}", system_config_path);
+        LOG_INFO("システム設定を読み込みました: {}", system_config_path);
     } else {
         LOG_WARN("システム設定ファイルが見つかりません: {}", system_config_path);
     }
     
     // Load CSMS configuration
     std::string csms_config_path = config_dir_ + "/csms.yaml";
+    LOG_INFO("CSMS設定ファイルを確認中: {}", csms_config_path);
     if (fs::exists(csms_config_path)) {
+        LOG_INFO("CSMS設定ファイルを読み込み中...");
         if (!csms_config_.loadFromYaml(csms_config_path)) {
             LOG_ERROR("CSMS設定の読み込みに失敗しました: {}", csms_config_path);
             return false;
         }
-        LOG_DEBUG("CSMS設定を読み込みました: {}", csms_config_path);
+        LOG_INFO("CSMS設定を読み込みました: {}", csms_config_path);
     } else {
         LOG_WARN("CSMS設定ファイルが見つかりません: {}", csms_config_path);
     }
     
     // Load device configurations
     std::string devices_dir = config_dir_ + "/devices";
+    LOG_INFO("デバイス設定ディレクトリを確認中: {}", devices_dir);
     if (fs::exists(devices_dir)) {
         for (const auto& entry : fs::directory_iterator(devices_dir)) {
             if (entry.is_regular_file()) {
                 std::string file_path = entry.path().string();
                 if (boost::algorithm::ends_with(file_path, ".yaml") || boost::algorithm::ends_with(file_path, ".yml")) {
+                    LOG_INFO("デバイス設定ファイルを読み込み中: {}", file_path);
                     DeviceConfigCollection device_collection;
                     if (device_collection.loadFromYaml(file_path)) {
                         for (const auto& device : device_collection.getDevices()) {
@@ -100,6 +108,7 @@ bool ConfigManager::loadAllConfigs() {
         }
     }
     
+    LOG_INFO("設定ファイルの読み込みが完了しました");
     return true;
 }
 
